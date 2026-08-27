@@ -4,6 +4,8 @@
   "description": "This is an attempt to build a variant of the game pacman from scratch using HTML, CSS and JavaScript for training purposes.",
   "main": "index.js",
   "scripts": {
+    "dev": "esbuild js/game/controller.js --bundle --format=esm --outfile=dist/game.js --servedir=.",
+    "build": "esbuild js/game/controller.js --bundle --format=esm --outfile=dist/game.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {

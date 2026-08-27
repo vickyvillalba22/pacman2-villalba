@@ -15,7 +15,7 @@ export default class BackgroundCanvas extends Canvas {
 
         if (isListFilled) {
             const request = backgroundRequestList[0];
-            this.#drawLifeCounterSpriteRepresentation(request.lifeCount);
+            this.#drawLifeCounterSpriteRepresentation(request.lifeCount, request.score);
             this.#drawScore(request);
 
             backgroundRequestList.forEach(request => this.#drawBackgroundTileFor(request));
@@ -40,7 +40,17 @@ export default class BackgroundCanvas extends Canvas {
     }
 
 
-    #drawLifeCounterSpriteRepresentation(numberOfLifes) {
+    #drawLifeCounterSpriteRepresentation(numberOfLifes, score) {
+        window.dispatchEvent(new CustomEvent('pacman-life-count', {
+            detail: {
+                lifeCount: numberOfLifes,
+                score,
+                columnNumber: super.columnNumber,
+                tileWidth: super.tileWidth,
+                tileHeight: super.tileHeight
+            }
+        }));
+
         for (let i = 1; i <= numberOfLifes; i++) {
             const xCanvasPosition = (this.columnNumber - i) * super.tileWidth;
             const yCanvasPosition = 0;

@@ -2,6 +2,7 @@
 
 import Game from '../game/model/Game.mjs';
 import Configuration from '../global/Configuration.mjs';
+import LifeCounterOverlay from './views/pixi/LifeCounterOverlay.mjs';
 
 
 /*  
@@ -14,9 +15,13 @@ import Configuration from '../global/Configuration.mjs';
 const mainCanvas = document.getElementById('gameCanvas');
 const backgroundCanvas = document.getElementById('backgroundCanvas');
 
+const lifeCounterOverlay = new LifeCounterOverlay(mainCanvas);
 const game = new Game(mainCanvas, backgroundCanvas);
 
-window.addEventListener('load', () => game.initialize() ); // ensure all resources are completely loaded 
+window.addEventListener('load', async () => {
+   await lifeCounterOverlay.initialize();
+   game.initialize();
+}); // ensure all resources are completely loaded
 
 mainCanvas.addEventListener('click', () => game.start() );
 document.addEventListener('keydown', callBackKeyDown, true);
