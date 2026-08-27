@@ -60,7 +60,7 @@ export default class BackgroundCanvas extends Canvas {
             text: `Score: ${request.score}`, 
             maxWidthXPosition: maxTextWidthColumn * super.tileWidth,
             style: 'white', 
-            font: 'bold 1em sans-serif'
+            font: "bold 1em 'Tengoku', monospace"
         };
 
         super.drawText(argumentObject);

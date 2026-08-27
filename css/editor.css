@@ -5,10 +5,16 @@
     --editorContainerHeightInTiles: 4;
 }
 
+@font-face {
+    font-family: 'Tengoku';
+    src: url('../assets/tengoku/Tengoku.ttf') format('truetype');
+    font-display: swap;
+}
+
 
 body {
     background-color: #1c1c1a;
-    font-family: 'Lucida Console', monospace;
+    font-family: 'Tengoku', monospace;
 }
 
 

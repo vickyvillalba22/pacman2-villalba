@@ -1,6 +1,12 @@
 @import url(./navigationMobile.css);
 @import url(./navigationDesktop.css);
 
+@font-face {
+   font-family: 'Tengoku';
+   src: url('../assets/tengoku/Tengoku.ttf') format('truetype');
+   font-display: swap;
+}
+
 
 *, *::before, *::after {
    box-sizing: border-box;
@@ -10,7 +16,7 @@
 body {
    background-color: #1c1c1a;
    color: white;
-   font-family: 'Lucida Console', monospace;
+   font-family: 'Tengoku', monospace;
 }
 
 

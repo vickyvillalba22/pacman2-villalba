@@ -1,0 +1,26 @@
+{
+  "name": "pacman2",
+  "version": "1.0.0",
+  "description": "This is an attempt to build a variant of the game pacman from scratch using HTML, CSS and JavaScript for training purposes.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lcov29/pacman.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/lcov29/pacman/issues"
+  },
+  "homepage": "https://github.com/lcov29/pacman#readme",
+  "dependencies": {
+    "pixi.js": "^8.20.1"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2"
+  }
+}
