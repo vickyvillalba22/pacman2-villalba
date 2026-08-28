@@ -6,6 +6,8 @@ export default class LifeCounterOverlay {
     #mainCanvas = null;
     #app = null;
     #heartContainer = null;
+    #pauseIndicator = null;
+    #pauseHint = null;
     #scoreLabel = null;
     #lifeCount = 0;
     #score = 0;
@@ -54,8 +56,33 @@ export default class LifeCounterOverlay {
 
         this.#heartContainer = new Container();
         this.#app.stage.addChild(this.#heartContainer);
+
+        this.#pauseHint = new Text({
+            text: 'pulsa enter para pausar',
+            style: {
+                fill: 0xfff6a8,
+                fontFamily: 'Tengoku, monospace',
+                fontSize: 12,
+                fontWeight: 'normal'
+            }
+        });
+        this.#pauseHint.anchor.set(0.5);
+        this.#app.stage.addChild(this.#pauseHint);
+
+        this.#pauseIndicator = new Container();
+        this.#pauseIndicator.visible = false;
+        this.#app.stage.addChild(this.#pauseIndicator);
         this.#app.ticker.add(({ deltaTime }) => this.#animateHearts(deltaTime));
         this.#resizeToMainCanvas();
+    }
+
+
+    setPaused(isPaused) {
+        if (!this.#pauseIndicator) {
+            return;
+        }
+
+        this.#pauseIndicator.visible = isPaused;
     }
 
 
@@ -108,6 +135,12 @@ export default class LifeCounterOverlay {
         this.#positionScoreLabel(tileHeight);
         const scoreY = Math.max(0, (tileHeight - this.#scoreLabel.offsetHeight) / 2);
 
+        this.#pauseHint.style.fontSize = `${Math.max(8, Math.floor(tileHeight * 0.24)) + 8}px`;
+        this.#pauseHint.position.set(
+            this.#mainCanvas.clientWidth / 2,
+            tileHeight / 2
+        );
+
         const score = new Text({
             text: `${this.#score}`,
             style: {
@@ -133,6 +166,39 @@ export default class LifeCounterOverlay {
             heart.position.set(slotX + ((tileWidth - heartWidth) / 2), (tileHeight - heartHeight) / 2);
             this.#heartContainer.addChild(heart);
         }
+
+        this.#renderPauseIndicator(tileHeight);
+    }
+
+
+    #renderPauseIndicator(tileHeight) {
+        if (!this.#pauseIndicator) {
+            return;
+        }
+
+        this.#pauseIndicator.removeChildren().forEach(child => child.destroy());
+
+        const canvasWidth = this.#mainCanvas.clientWidth;
+        const canvasHeight = this.#mainCanvas.clientHeight;
+        const indicatorSize = Math.max(56, Math.min(canvasWidth, canvasHeight) * 0.18);
+        const barWidth = Math.max(8, indicatorSize * 0.16);
+        const barHeight = indicatorSize * 0.48;
+
+        const panel = new Graphics();
+        panel.rect(0, 0, indicatorSize, indicatorSize);
+        panel.fill(0x250044, 0.92);
+        panel.stroke({ width: 3, color: 0xd8b4ff });
+
+        const pauseSymbol = new Graphics();
+        pauseSymbol.rect(indicatorSize * 0.29, (indicatorSize - barHeight) / 2, barWidth, barHeight);
+        pauseSymbol.rect(indicatorSize * 0.55, (indicatorSize - barHeight) / 2, barWidth, barHeight);
+        pauseSymbol.fill(0xfff6a8);
+
+        this.#pauseIndicator.addChild(panel, pauseSymbol);
+        this.#pauseIndicator.position.set(
+            (canvasWidth - indicatorSize) / 2,
+            tileHeight + ((canvasHeight - tileHeight - indicatorSize) / 2)
+        );
     }
 
 

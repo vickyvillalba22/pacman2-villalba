@@ -39,6 +39,7 @@ function callBackMobileMenuButton() {
 
 function startGame() {
    startMessage.classList.add('invisible');
+   lifeCounterOverlay.setPaused(false);
    game.start();
 }
 
@@ -55,7 +56,14 @@ function showGameOver() {
 
 function restartGame() {
    gameOverModal.classList.add('invisible');
+   lifeCounterOverlay.setPaused(false);
    game.restart();
+}
+
+
+function togglePause() {
+   game.togglePause();
+   lifeCounterOverlay.setPaused(!game.isAnimationNecessary);
 }
 
 
@@ -91,13 +99,21 @@ function callBackKeyDown(event) {
          break;
 
       case 'Enter':
+         if (game.isAnimationNecessary) {
+            togglePause();
+         } else {
+            startGame();
+         }
+         event.preventDefault();
+         break;
+
       case 'Space':
          startGame();
          event.preventDefault();
          break;
 
       case 'KeyP':
-         game.togglePause();
+         togglePause();
          break;
    }         
 }
