@@ -28,6 +28,7 @@
       <main>
 
          <canvas id="gameCanvas"></canvas>
+         <div id="startMessage">Presioná ENTER para comenzar</div>
 
          <canvas id="backgroundCanvas" class="invisible"></canvas>
 
@@ -121,6 +122,13 @@
          </div>
 
       </main>
+
+       <div id="gameOverModal" class="invisible" role="dialog" aria-modal="true" aria-labelledby="gameOverTitle">
+          <div class="gameOverPanel">
+             <h1 id="gameOverTitle">GAME OVER</h1>
+             <button id="restartButton" type="button">Volver a jugar</button>
+          </div>
+       </div>
 
    </body>
    

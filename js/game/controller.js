@@ -14,18 +14,22 @@ import LifeCounterOverlay from './views/pixi/LifeCounterOverlay.mjs';
 
 const mainCanvas = document.getElementById('gameCanvas');
 const backgroundCanvas = document.getElementById('backgroundCanvas');
+const startMessage = document.getElementById('startMessage');
+const gameOverModal = document.getElementById('gameOverModal');
+const restartButton = document.getElementById('restartButton');
 
 const lifeCounterOverlay = new LifeCounterOverlay(mainCanvas);
-const game = new Game(mainCanvas, backgroundCanvas);
+const game = new Game(mainCanvas, backgroundCanvas, showStartMessage, showGameOver);
 
 window.addEventListener('load', async () => {
    await lifeCounterOverlay.initialize();
    game.initialize();
 }); // ensure all resources are completely loaded
 
-mainCanvas.addEventListener('click', () => game.start() );
+mainCanvas.addEventListener('click', startGame);
 document.addEventListener('keydown', callBackKeyDown, true);
 document.getElementsByClassName('buttonMobileMenu')[0].addEventListener('click', callBackMobileMenuButton);
+restartButton.addEventListener('click', restartGame);
 
 
 function callBackMobileMenuButton() {
@@ -33,7 +37,33 @@ function callBackMobileMenuButton() {
 }
 
 
+function startGame() {
+   startMessage.classList.add('invisible');
+   game.start();
+}
+
+
+function showStartMessage() {
+   startMessage.classList.remove('invisible');
+}
+
+
+function showGameOver() {
+   gameOverModal.classList.remove('invisible');
+}
+
+
+function restartGame() {
+   gameOverModal.classList.add('invisible');
+   game.restart();
+}
+
+
 function callBackKeyDown(event) {
+   if (!gameOverModal.classList.contains('invisible')) {
+      return;
+   }
+
    switch(event.code) {
    
       case 'ArrowUp':
@@ -62,7 +92,7 @@ function callBackKeyDown(event) {
 
       case 'Enter':
       case 'Space':
-         game.start();
+         startGame();
          event.preventDefault();
          break;
 

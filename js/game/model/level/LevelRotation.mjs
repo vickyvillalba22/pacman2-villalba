@@ -58,6 +58,12 @@ export default class LevelRotation {
     }
 
 
+    restart() {
+        this.#currentJsonLevelIndex = 0;
+        this.#currentJsonLevelRemainingIterations = this.#getCurrentLevelJson().numberOfIterations;
+    }
+
+
     #decrementRemainingIterations() {
         if (this.#currentJsonLevelRemainingIterations > 0) {
             this.#currentJsonLevelRemainingIterations--;

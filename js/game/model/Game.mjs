@@ -9,6 +9,8 @@ export default class Game {
    #currentLevel = null;
    #levelRotation = [];
    #mainView = null;
+   #onRestart = null;
+   #onGameOver = null;
    #viewList = [];
    #isAnimationNecessary = false;
    #remainingPacmanLifes = 0;
@@ -16,8 +18,10 @@ export default class Game {
    #currentTotalScore = 0;
 
 
-   constructor(mainCanvas, backgroundCanvas) {
+   constructor(mainCanvas, backgroundCanvas, onRestart, onGameOver) {
       this.#mainView = new CanvasView(mainCanvas, backgroundCanvas, this);
+      this.#onRestart = onRestart;
+      this.#onGameOver = onGameOver;
       this.#viewList = [this.#mainView];
       Directions.initializeDirectionMaps();
    }
@@ -47,6 +51,7 @@ export default class Game {
       this.#currentLevel = this.#levelRotation.getCurrentLevel(this);
       this.#initializeViews();
       this.#isAnimationNecessary = false;
+      this.#onRestart();
    }
 
 
@@ -76,6 +81,15 @@ export default class Game {
    start() {
       this.#mainView.startAnimationLoop();
       this.#isAnimationNecessary = true;
+   }
+
+
+   restart() {
+      this.#currentTotalScore = 0;
+      this.#completedLevelScore = 0;
+      this.#remainingPacmanLifes = this.#levelRotation.initialPacmanLifes;
+      this.#levelRotation.restart();
+      this.loadNextLevel();
    }
 
 
@@ -139,9 +153,8 @@ export default class Game {
       const isGameOver = this.#remainingPacmanLifes === 0;
 
       if (isGameOver) {
-         // Placeholder functionality, replace later
          this.#pause();
-         window.alert('Game over');
+         this.#onGameOver();
       }
    }
 
