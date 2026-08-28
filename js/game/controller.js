@@ -16,6 +16,7 @@ const mainCanvas = document.getElementById('gameCanvas');
 const backgroundCanvas = document.getElementById('backgroundCanvas');
 const startMessage = document.getElementById('startMessage');
 const gameOverModal = document.getElementById('gameOverModal');
+const gameOverScore = document.getElementById('gameOverScore');
 const restartButton = document.getElementById('restartButton');
 
 const lifeCounterOverlay = new LifeCounterOverlay(mainCanvas);
@@ -49,7 +50,8 @@ function showStartMessage() {
 }
 
 
-function showGameOver() {
+function showGameOver(score) {
+   gameOverScore.textContent = `Score: ${score}`;
    gameOverModal.classList.remove('invisible');
 }
 
@@ -69,6 +71,10 @@ function togglePause() {
 
 function callBackKeyDown(event) {
    if (!gameOverModal.classList.contains('invisible')) {
+      if (event.code === 'Enter') {
+         restartGame();
+         event.preventDefault();
+      }
       return;
    }
 

@@ -14,7 +14,6 @@ export default class Game {
    #viewList = [];
    #isAnimationNecessary = false;
    #remainingPacmanLifes = 0;
-   #completedLevelScore = 0;
    #currentTotalScore = 0;
 
 
@@ -86,7 +85,6 @@ export default class Game {
 
    restart() {
       this.#currentTotalScore = 0;
-      this.#completedLevelScore = 0;
       this.#remainingPacmanLifes = this.#levelRotation.initialPacmanLifes;
       this.#levelRotation.restart();
       this.loadNextLevel();
@@ -105,16 +103,6 @@ export default class Game {
    #pause() {
       this.#mainView.stopAnimationLoop();
       this.#isAnimationNecessary = false;
-   }
-
-
-   saveCurrentLevelScore() {
-      this.#completedLevelScore = this.#currentTotalScore;
-   }
-
-
-   resetCurrentLevelScore() {
-      this.#currentTotalScore = this.#completedLevelScore;
    }
 
 
@@ -154,7 +142,7 @@ export default class Game {
 
       if (isGameOver) {
          this.#pause();
-         this.#onGameOver();
+          this.#onGameOver(this.#currentTotalScore);
       }
    }
 

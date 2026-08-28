@@ -23,17 +23,22 @@
         padding: 0.5rem 1rem;
         text-decoration: none;
     }
+
+
+    .currentSite a {
+        background: rgba(0, 0, 255, 0.6);
+    }
  
     
     .menuBar a:hover,
     .menuBar a:focus  {
-        background: #252121; 
+         background: rgba(0, 0, 255, 0.6);
     }
 
 
     .currentSite a:hover,
     .currentSite a:focus {
-        background: transparent;
+        background: rgba(0, 0, 255, 0.6);
     }
 
 

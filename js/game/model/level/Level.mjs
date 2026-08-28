@@ -183,13 +183,11 @@ export default class Level {
     // TODO: divide handling of win/lose from actual movement
     calculateNextTurn() {
         if (this.isWon()) {
-            this.#game.saveCurrentLevelScore();
             this.#game.loadNextLevel();
             return;
         }
 
         if (this.isLost()) {
-            this.#game.resetCurrentLevelScore();
             this.#game.decrementPacmanLifes();
             this.#game.reloadCurrentLevel();
             this.#game.handleGameOver();

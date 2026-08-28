@@ -149,6 +149,14 @@ main {
 }
 
 
+#gameOverScore {
+   margin: -0.75rem 0 1.75rem;
+   color: #ffffff;
+   font-size: clamp(1.1rem, 3vw, 1.5rem);
+   letter-spacing: 0.08em;
+}
+
+
 #restartButton {
    padding: 0.8rem 1.25rem;
    border: 3px solid #fff6a8;

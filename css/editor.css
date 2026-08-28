@@ -1,3 +1,7 @@
+@import url(./navigationMobile.css);
+@import url(./navigationDesktop.css);
+
+
 :root {
     --baseWidth: 32px;
     --baseHeight: 32px;

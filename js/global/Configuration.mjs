@@ -247,7 +247,7 @@ export default class Configuration {
 
    // Settings for canvas view
       static spriteAlternationIntervalLength = 5;
-      static actorMovementSpeedInPixel = 1;
+       static actorMovementSpeedInPixel = 2;
 
 
 
