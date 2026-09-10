@@ -1,0 +1,42 @@
+@font-face {
+   font-family: 'Jersey 10';
+   src: url('../assets/Jersey_10/Jersey10-Regular.ttf') format('truetype');
+   font-display: swap;
+}
+
+
+:root {
+   /* Palette */
+   --color-black: #000000;
+   --color-white: #ffffff;
+   --color-yellow: #fff425;
+   --color-pink: #ff3493;
+   --color-sky-blue: #0dc3ff;
+   --color-green: #17ff40;
+   --color-orange: #ffc400;
+
+   /* Typography */
+   --font-primary: 'Jersey 10', monospace;
+}
+
+
+*,
+*::before,
+*::after {
+   box-sizing: border-box;
+}
+
+
+body {
+   background-color: var(--color-black);
+   color: var(--color-white);
+   font-family: var(--font-primary);
+}
+
+
+button,
+input,
+select,
+textarea {
+   font-family: inherit;
+}

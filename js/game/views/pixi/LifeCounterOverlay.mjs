@@ -50,7 +50,7 @@ export default class LifeCounterOverlay {
         this.#scoreLabel.style.pointerEvents = 'none';
         this.#scoreLabel.style.zIndex = '11';
         this.#scoreLabel.style.color = 'white';
-        this.#scoreLabel.style.fontFamily = "'Tengoku', monospace";
+        this.#scoreLabel.style.fontFamily = "'Jersey 10', monospace";
         this.#scoreLabel.style.fontWeight = 'normal';
         document.body.appendChild(this.#scoreLabel);
 
@@ -61,7 +61,7 @@ export default class LifeCounterOverlay {
             text: 'pulsa enter para pausar',
             style: {
                 fill: 0xfff6a8,
-                fontFamily: 'Tengoku, monospace',
+                fontFamily: "'Jersey 10', monospace",
                 fontSize: 12,
                 fontWeight: 'normal'
             }
@@ -145,7 +145,7 @@ export default class LifeCounterOverlay {
             text: `${this.#score}`,
             style: {
                 fill: 0xffffff,
-                fontFamily: 'Tengoku, monospace',
+                fontFamily: "'Jersey 10', monospace",
                 fontSize: scoreFontSize,
                 fontWeight: 'normal'
             }
