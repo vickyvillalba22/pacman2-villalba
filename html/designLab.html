@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="es">
+
+   <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Visual Lab</title>
+      <link rel="icon" type="image/svg+xml" href="../sprites/actors/pacman/pacman_right.svg">
+      <link rel="stylesheet" href="../css/designLab.css">
+      <script type="module" src="../dist/design-lab.js"></script>
+   </head>
+
+   <body>
+      <nav class="menuBar">
+         <button class="buttonMobileMenu">Menu</button>
+         <ul>
+            <li><a href="../index.html">Game</a></li>
+            <li><a href="./customLevelSelection.html">Custom Level</a></li>
+            <li><a href="./editor.html">Level Editor</a></li>
+            <li class="currentSite"><a href="#">Visual Lab</a></li>
+         </ul>
+      </nav>
+
+      <main class="labPage">
+         <header class="labHeader">
+            <div>
+               <p class="eyebrow">PACMAN // VISUAL SYSTEM</p>
+               <h1>Character Lab</h1>
+               <p class="labIntro">Un espacio aislado para probar personajes, tiles y proporciones antes de llevarlos al juego.</p>
+            </div>
+            <div class="buildTag">PIXIJ<span>JS</span> / 01</div>
+         </header>
+
+         <section class="labWorkspace" aria-label="Laboratorio visual">
+            <aside class="labPanel">
+               <div class="panelHeading">
+                  <span class="panelIndex">01</span>
+                  <div>
+                     <p class="panelKicker">WORKBENCH</p>
+                     <h2>Preview setup</h2>
+                  </div>
+               </div>
+
+               <div class="controlGroup">
+                  <label for="previewMode">Modo</label>
+                  <select id="previewMode">
+                     <option value="characters">Personajes</option>
+                     <option value="elements">Elementos</option>
+                     <option value="composition">Composición</option>
+                  </select>
+               </div>
+
+               <div class="controlGroup">
+                  <label for="previewCharacter">Personaje</label>
+                  <select id="previewCharacter">
+                     <option value="p">Pac-Man</option>
+                     <option value="b">Blinky</option>
+                     <option value="y">Pinky</option>
+                     <option value="i">Inky</option>
+                     <option value="c">Clyde</option>
+                  </select>
+               </div>
+
+               <div class="controlGroup">
+                  <label for="previewState">Estado</label>
+                  <select id="previewState">
+                     <option value="normal">Normal</option>
+                     <option value="scared">Scared</option>
+                     <option value="scaredEnd">Scared end</option>
+                     <option value="dead">Dead</option>
+                  </select>
+               </div>
+
+               <div class="controlGroup">
+                  <label for="previewDirection">Dirección</label>
+                  <select id="previewDirection">
+                     <option value="up">Arriba</option>
+                     <option value="right" selected>Derecha</option>
+                     <option value="down">Abajo</option>
+                     <option value="left">Izquierda</option>
+                  </select>
+               </div>
+
+               <div class="controlGroup">
+                  <label for="tileSize">Tamaño de tile</label>
+                  <input id="tileSize" type="range" min="24" max="72" value="48">
+                  <output id="tileSizeValue" for="tileSize">48 px</output>
+               </div>
+
+               <div class="controlGroup controlGroupInline">
+                  <label for="showGrid">Mostrar grilla</label>
+                  <input id="showGrid" type="checkbox" checked>
+               </div>
+
+               <div class="panelDivider"></div>
+
+               <div class="legend">
+                  <p class="panelKicker">CURRENT PASS</p>
+                  <div class="legendItem"><span class="legendDot yellow"></span>Pac-Man</div>
+                  <div class="legendItem"><span class="legendDot red"></span>Fantasmas / estados</div>
+                  <div class="legendItem"><span class="legendDot cyan"></span>Tile system</div>
+               </div>
+
+               <p class="panelNote">La lógica del juego no participa en esta vista. Este canvas sólo sirve para explorar la dirección visual.</p>
+            </aside>
+
+            <section class="previewPanel">
+               <div class="previewToolbar">
+                  <div>
+                     <p class="panelKicker">LIVE CANVAS</p>
+                     <h2>Prototype board</h2>
+                  </div>
+                  <span id="previewStatus" class="previewStatus">READY / PIXIJS</span>
+               </div>
+               <div id="previewCanvas" class="previewCanvas" aria-label="Canvas de previsualización PixiJS"></div>
+               <div class="previewFooter">
+                  <span id="canvasDimensions">Canvas responsive</span>
+                  <span>SVG / GRAPHICS / TEXTURES</span>
+               </div>
+            </section>
+         </section>
+
+         <section class="animationSection" aria-label="Previsualización de animación">
+            <div class="animationHeader">
+               <div>
+                  <p class="panelKicker">MOTION STUDY / 01</p>
+                  <h2>Animation preview</h2>
+                  <p class="sectionIntro">Pac-Man permanece en la misma posición. El botón sólo activa y pausa la animación de la boca.</p>
+               </div>
+               <button id="toggleAnimation" class="animationButton" type="button">Activar animación</button>
+            </div>
+            <div id="animationCanvas" class="animationCanvas" aria-label="Animación de Pac-Man"></div>
+            <div class="previewFooter animationFooter">
+               <span id="animationStatus">PAUSED / STATIC</span>
+               <span>FRAME 01 / MOUTH CYCLE</span>
+            </div>
+         </section>
+      </main>
+   </body>
+
+</html>

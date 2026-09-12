@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "esbuild js/game/controller.js --bundle --format=esm --outfile=dist/game.js --servedir=.",
     "build": "esbuild js/game/controller.js --bundle --format=esm --outfile=dist/game.js",
+    "build:design-lab": "esbuild js/designLab/controller.js --bundle --format=esm --outfile=dist/design-lab.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
