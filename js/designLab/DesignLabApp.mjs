@@ -1,4 +1,4 @@
-import { Application, Assets, Container, FillGradient, Graphics, Sprite, Text } from 'pixi.js';
+import { Application, Assets, Container, FillGradient, Graphics, Sprite, Text, Texture } from 'pixi.js';
 
 export default class DesignLabApp {
    #container = null;
@@ -19,6 +19,13 @@ export default class DesignLabApp {
    #movementContent = null;
    #movementTextures = null;
    #movementPacman = null;
+   #movementPacmanBody = null;
+   #movementPacmanRadius = 0;
+   #movementAnimationTime = 0;
+   #movementPacmanTrail = null;
+   #movementTrailPositions = [];
+   #movementGhosts = [];
+   #movementGhostStepTimer = 0;
    #movementTileSize = 0;
    #movementOriginX = 0;
    #movementOriginY = 0;
@@ -193,6 +200,8 @@ export default class DesignLabApp {
       this.#movementKeyHandler = event => this.#handleMovementKey(event);
       window.addEventListener('keydown', this.#movementKeyHandler);
       this.#drawMovementMap();
+      this.#movementApp.ticker.add(({ deltaTime }) => this.#animateMovementPacman(deltaTime));
+      this.#movementApp.ticker.add(({ deltaTime }) => this.#animateMovementGhosts(deltaTime));
    }
 
    #drawMovementMap() {
@@ -201,6 +210,14 @@ export default class DesignLabApp {
       }
 
       this.#movementContent.removeChildren().forEach(child => child.destroy());
+      this.#movementPacmanTrail?.texture.destroy(true);
+      this.#movementGhosts.forEach(ghost => {
+         ghost.trailLayer?.texture.destroy(true);
+         ghost.container = null;
+         ghost.body = null;
+         ghost.trailLayer = null;
+      });
+      this.#movementPacmanTrail = null;
 
       const columnCount = this.#movementMap[0].length;
       const rowCount = this.#movementMap.length;
@@ -213,6 +230,10 @@ export default class DesignLabApp {
       this.#movementTileSize = tileSize;
       this.#movementOriginX = originX;
       this.#movementOriginY = originY;
+
+      if (this.#movementTrailPositions.length === 0) {
+         this.#movementTrailPositions.push({ ...this.#movementPosition });
+      }
 
       this.#movementMap.forEach((row, rowIndex) => {
          [...row].forEach((tile, columnIndex) => {
@@ -242,11 +263,20 @@ export default class DesignLabApp {
       });
 
       const pacmanSize = tileSize * 0.85;
+      this.#movementPacmanTrail = this.#createMovementTrailSprite();
+      this.#renderMovementTrail(this.#movementPacmanTrail, this.#movementTrailPositions, 0xffe84d);
+      this.#initializeMovementGhosts();
+      this.#movementGhosts.forEach(ghost => {
+         ghost.trailLayer = this.#createMovementTrailSprite();
+         this.#renderMovementTrail(ghost.trailLayer, ghost.trailPositions, ghost.color);
+      });
+
       const pacman = new Container();
-      const pacmanTrail = this.#createAnimationTrail(0xffe84d, tileSize * 4, pacmanSize, false);
       const pacmanBody = new Graphics();
-      this.#drawPacmanBody(pacmanBody, pacmanSize / 2, 0.35);
-      pacman.addChild(pacmanTrail, pacmanBody);
+      this.#movementPacmanBody = pacmanBody;
+      this.#movementPacmanRadius = pacmanSize / 2;
+      this.#drawPacmanBody(pacmanBody, this.#movementPacmanRadius, 0.35);
+      pacman.addChild(pacmanBody);
       pacman.position.set(
          originX + ((this.#movementPosition.column + 0.5) * tileSize),
          originY + ((this.#movementPosition.row + 0.5) * tileSize)
@@ -254,6 +284,74 @@ export default class DesignLabApp {
       pacman.rotation = this.#getDirectionRotation(this.#movementDirection);
       this.#movementPacman = pacman;
       this.#movementContent.addChild(pacman);
+
+      this.#movementGhosts.forEach(ghost => {
+         ghost.container = new Container();
+         ghost.body = this.#createGhost(
+            ghost.color,
+            'normal',
+            ghost.direction,
+            this.#movementTileSize * 0.68
+         );
+         ghost.container.addChild(ghost.body);
+         this.#positionMovementGhost(ghost);
+         this.#movementContent.addChild(ghost.container);
+      });
+   }
+
+   #initializeMovementGhosts() {
+      if (this.#movementGhosts.length > 0) {
+         return;
+      }
+
+      const patrols = [
+         {
+            color: 0xff425d,
+            route: [[3, 1], [2, 1], [1, 1], [1, 2], [1, 3], [1, 4], [1, 3], [1, 2], [1, 1], [2, 1]]
+         },
+         {
+            color: 0xff75c8,
+            route: [[3, 15], [2, 15], [1, 15], [1, 14], [1, 13], [1, 12], [1, 11], [1, 12], [1, 13], [1, 14], [1, 15], [2, 15]]
+         },
+         {
+            color: 0x6de7ff,
+            route: [[7, 5], [6, 5], [6, 6], [6, 7], [6, 8], [6, 9], [7, 9], [6, 9], [6, 8], [6, 7], [6, 6], [6, 5]]
+         },
+         {
+            color: 0xffa347,
+            route: [[5, 13], [5, 14], [5, 15], [6, 15], [7, 15], [7, 14], [7, 13], [6, 13]]
+         }
+      ];
+
+      this.#movementGhosts = patrols.map(({ color, route }) => {
+         const path = route.map(([row, column]) => ({ row, column }));
+         const direction = this.#getMovementDirection(path[0], path[1]);
+         return {
+            color,
+            route: path,
+            routeIndex: 0,
+            trailPositions: [{ ...path[0] }],
+            direction,
+            container: null,
+            body: null,
+            trailLayer: null
+         };
+      });
+   }
+
+   #getMovementDirection(from, to) {
+      if (to.row < from.row) return 'up';
+      if (to.row > from.row) return 'down';
+      if (to.column < from.column) return 'left';
+      return 'right';
+   }
+
+   #positionMovementGhost(ghost) {
+      const position = ghost.route[ghost.routeIndex];
+      ghost.container.position.set(
+         this.#movementOriginX + ((position.column + 0.5) * this.#movementTileSize),
+         this.#movementOriginY + ((position.row + 0.5) * this.#movementTileSize)
+      );
    }
 
    #handleMovementKey(event) {
@@ -270,8 +368,6 @@ export default class DesignLabApp {
       }
 
       event.preventDefault();
-      this.#movementDirection = direction.name;
-      this.#movementPacman.rotation = this.#getDirectionRotation(direction.name);
 
       const nextRow = this.#movementPosition.row + direction.row;
       const nextColumn = this.#movementPosition.column + direction.column;
@@ -284,11 +380,183 @@ export default class DesignLabApp {
          return;
       }
 
+      this.#movementDirection = direction.name;
+      this.#movementPacman.rotation = this.#getDirectionRotation(direction.name);
       this.#movementPosition = { row: nextRow, column: nextColumn };
+      this.#movementTrailPositions.push({ ...this.#movementPosition });
+      this.#trimMovementTrailPositions();
       this.#movementPacman.position.set(
          this.#movementOriginX + ((nextColumn + 0.5) * this.#movementTileSize),
          this.#movementOriginY + ((nextRow + 0.5) * this.#movementTileSize)
       );
+       this.#renderMovementTrail(this.#movementPacmanTrail, this.#movementTrailPositions, 0xffe84d);
+    }
+
+   #trimMovementTrailPositions(positions = this.#movementTrailPositions) {
+      let remainingLength = 4;
+
+      for (let index = positions.length - 1; index > 0; index--) {
+         const newerPosition = positions[index];
+         const olderPosition = positions[index - 1];
+         const segmentLength = Math.hypot(
+            newerPosition.row - olderPosition.row,
+            newerPosition.column - olderPosition.column
+         );
+
+         if (segmentLength >= remainingLength) {
+            positions.splice(0, index - 1);
+            return;
+         }
+
+         remainingLength -= segmentLength;
+      }
+   }
+
+   #createMovementTrailSprite() {
+      const resolution = window.devicePixelRatio || 1;
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.ceil(this.#movementApp.screen.width * resolution);
+      canvas.height = Math.ceil(this.#movementApp.screen.height * resolution);
+      const context = canvas.getContext('2d', { willReadFrequently: true });
+      const texture = Texture.from(canvas, true);
+      const sprite = new Sprite(texture);
+      sprite.width = this.#movementApp.screen.width;
+      sprite.height = this.#movementApp.screen.height;
+      this.#movementContent.addChild(sprite);
+
+      return { canvas, context, texture, sprite, resolution };
+   }
+
+   #renderMovementTrail(trailLayer, routePositions, color) {
+      if (!trailLayer?.context || !trailLayer.canvas || !trailLayer.texture) {
+         return;
+      }
+
+      const { context, canvas, texture, resolution } = trailLayer;
+      context.clearRect(0, 0, canvas.width, canvas.height);
+
+      if (routePositions.length < 2) {
+         texture.source.update();
+         return;
+      }
+
+      const points = routePositions.map(position => ({
+         x: this.#movementOriginX + ((position.column + 0.5) * this.#movementTileSize),
+         y: this.#movementOriginY + ((position.row + 0.5) * this.#movementTileSize)
+      }));
+      const visiblePoints = [points[points.length - 1]];
+      let remainingLength = this.#movementTileSize * 4;
+      let totalLength = 0;
+
+      for (let index = points.length - 1; index > 0 && remainingLength > 0; index--) {
+         const newerPoint = points[index];
+         const olderPoint = points[index - 1];
+         const deltaX = olderPoint.x - newerPoint.x;
+         const deltaY = olderPoint.y - newerPoint.y;
+         const segmentLength = Math.hypot(deltaX, deltaY);
+         const visibleLength = Math.min(segmentLength, remainingLength);
+         const ratio = visibleLength / segmentLength;
+
+         visiblePoints.push({
+            x: newerPoint.x + deltaX * ratio,
+            y: newerPoint.y + deltaY * ratio
+         });
+         totalLength += visibleLength;
+         remainingLength -= visibleLength;
+      }
+
+      const segments = [];
+      let distanceAtSegmentStart = 0;
+      for (let index = 0; index < visiblePoints.length - 1; index++) {
+         const start = visiblePoints[index];
+         const end = visiblePoints[index + 1];
+         const deltaX = end.x - start.x;
+         const deltaY = end.y - start.y;
+         const length = Math.hypot(deltaX, deltaY);
+
+         segments.push({
+            start,
+            deltaX,
+            deltaY,
+            length,
+            lengthSquared: length * length,
+            distanceAtStart: distanceAtSegmentStart
+         });
+         distanceAtSegmentStart += length;
+      }
+
+      const radius = this.#movementTileSize * 0.34;
+      const padding = radius + (1 / resolution);
+      const left = Math.max(0, Math.floor((Math.min(...visiblePoints.map(point => point.x)) - padding) * resolution));
+      const top = Math.max(0, Math.floor((Math.min(...visiblePoints.map(point => point.y)) - padding) * resolution));
+      const right = Math.min(canvas.width, Math.ceil((Math.max(...visiblePoints.map(point => point.x)) + padding) * resolution));
+      const bottom = Math.min(canvas.height, Math.ceil((Math.max(...visiblePoints.map(point => point.y)) + padding) * resolution));
+      const width = right - left;
+      const height = bottom - top;
+
+      if (width <= 0 || height <= 0) {
+         texture.source.update();
+         return;
+      }
+
+      const image = context.createImageData(width, height);
+      const pixels = image.data;
+      const edgeRadius = radius + (0.5 / resolution);
+      const red = (color >> 16) & 0xff;
+      const green = (color >> 8) & 0xff;
+      const blue = color & 0xff;
+
+      for (let y = 0; y < height; y++) {
+         const pointY = (top + y + 0.5) / resolution;
+         for (let x = 0; x < width; x++) {
+            const pointX = (left + x + 0.5) / resolution;
+            let nearestDistance = Infinity;
+            let weightedPathDistance = 0;
+            let totalWeight = 0;
+
+            for (let segmentIndex = 0; segmentIndex < segments.length; segmentIndex++) {
+               const segment = segments[segmentIndex];
+               const relativeX = pointX - segment.start.x;
+               const relativeY = pointY - segment.start.y;
+               const rawProjection = ((relativeX * segment.deltaX) + (relativeY * segment.deltaY)) / segment.lengthSquared;
+
+                // Give the actor end a flat cap at its center instead of drawing a round cap over the sprite.
+               if (segmentIndex === 0 && rawProjection < 0) {
+                  continue;
+               }
+
+               const projection = Math.max(0, Math.min(1, rawProjection));
+               const closestX = segment.start.x + (segment.deltaX * projection);
+               const closestY = segment.start.y + (segment.deltaY * projection);
+               const distance = Math.hypot(pointX - closestX, pointY - closestY);
+               nearestDistance = Math.min(nearestDistance, distance);
+
+               const weight = Math.max(0, edgeRadius - distance);
+               if (weight > 0) {
+                  const pathDistance = segment.distanceAtStart + (projection * segment.length);
+                  weightedPathDistance += pathDistance * weight;
+                  totalWeight += weight;
+               }
+            }
+
+            if (nearestDistance >= edgeRadius || totalWeight === 0) {
+               continue;
+            }
+
+            const pathDistance = weightedPathDistance / totalWeight;
+            const fade = Math.max(0, 1 - (pathDistance / totalLength));
+            const coverage = Math.min(1, edgeRadius - nearestDistance);
+            const alpha = Math.round(255 * 0.38 * fade * coverage);
+            const pixelIndex = ((y * width) + x) * 4;
+            pixels[pixelIndex] = red;
+            pixels[pixelIndex + 1] = green;
+            pixels[pixelIndex + 2] = blue;
+            pixels[pixelIndex + 3] = alpha;
+         }
+      }
+
+      context.putImageData(image, left, top);
+      texture.source.update();
    }
 
    #createAnimationCharacter() {
@@ -402,6 +670,46 @@ export default class DesignLabApp {
       this.#animationTime += deltaTime * 0.08;
       const mouthOpening = 0.08 + ((Math.sin(this.#animationTime) + 1) / 2) * 0.52;
       this.#renderAnimationMouth(mouthOpening);
+   }
+
+   #animateMovementPacman(deltaTime) {
+      if (!this.#movementPacmanBody) {
+         return;
+      }
+
+      this.#movementAnimationTime += deltaTime * 0.08;
+      const mouthOpening = 0.08 + ((Math.sin(this.#movementAnimationTime) + 1) / 2) * 0.52;
+      this.#drawPacmanBody(this.#movementPacmanBody, this.#movementPacmanRadius, mouthOpening);
+   }
+
+   #animateMovementGhosts(deltaTime) {
+      if (this.#movementGhosts.length === 0) {
+         return;
+      }
+
+      this.#movementGhostStepTimer += deltaTime;
+      if (this.#movementGhostStepTimer < 14) {
+         return;
+      }
+      this.#movementGhostStepTimer %= 14;
+
+      this.#movementGhosts.forEach(ghost => {
+         const previousPosition = ghost.route[ghost.routeIndex];
+         ghost.routeIndex = (ghost.routeIndex + 1) % ghost.route.length;
+         const nextPosition = ghost.route[ghost.routeIndex];
+         ghost.direction = this.#getMovementDirection(previousPosition, nextPosition);
+         ghost.trailPositions.push({ ...nextPosition });
+         this.#trimMovementTrailPositions(ghost.trailPositions);
+         this.#positionMovementGhost(ghost);
+         this.#drawGhost(
+            ghost.body,
+            ghost.color,
+            'normal',
+            ghost.direction,
+            this.#movementTileSize * 0.68
+         );
+         this.#renderMovementTrail(ghost.trailLayer, ghost.trailPositions, ghost.color);
+      });
    }
 
    #renderAnimationMouth(opening) {
@@ -533,9 +841,14 @@ export default class DesignLabApp {
       return visual;
    }
 
-   #createGhost(color, state, direction) {
+   #createGhost(color, state, direction, size = this.#tileSize * 0.68) {
       const visual = new Graphics();
-      const size = this.#tileSize * 0.68;
+      this.#drawGhost(visual, color, state, direction, size);
+      return visual;
+   }
+
+   #drawGhost(visual, color, state, direction, size = this.#tileSize * 0.68) {
+      visual.clear();
       const width = size;
       const height = size;
       const isDead = state === 'dead';
@@ -567,7 +880,6 @@ export default class DesignLabApp {
       visual.circle(width * 0.2, -height * 0.08, width * 0.1).fill(0xffffff);
       visual.circle(-width * 0.18 + eyeDirection.x * eyeOffset, -height * 0.06 + eyeDirection.y * eyeOffset, width * 0.045).fill(0x101426);
       visual.circle(width * 0.22 + eyeDirection.x * eyeOffset, -height * 0.06 + eyeDirection.y * eyeOffset, width * 0.045).fill(0x101426);
-      return visual;
    }
 
    #createElement(type) {
