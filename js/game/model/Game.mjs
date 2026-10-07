@@ -8,27 +8,36 @@ export default class Game {
 
    #currentLevel = null;
    #levelRotation = [];
-   #mainView = null;
-   #onRestart = null;
-   #onGameOver = null;
+    #mainView = null;
+    #onRestart = null;
+    #onGameOver = null;
+    #onAudioEvent = null;
    #viewList = [];
    #isAnimationNecessary = false;
-   #remainingPacmanLifes = 0;
-   #currentTotalScore = 0;
+    #remainingPacmanLifes = 0;
+    #currentTotalScore = 0;
+    #isGameOverPending = false;
+    #gameOverDelayMilliseconds = 0;
 
 
-   constructor(mainCanvas, backgroundCanvas, onRestart, onGameOver) {
-      this.#mainView = new CanvasView(mainCanvas, backgroundCanvas, this);
-      this.#onRestart = onRestart;
-      this.#onGameOver = onGameOver;
-      this.#viewList = [this.#mainView];
-      Directions.initializeDirectionMaps();
+    constructor(mainCanvas, backgroundCanvas, onRestart, onGameOver, onAudioEvent) {
+       this.#mainView = new CanvasView(mainCanvas, backgroundCanvas, this);
+       this.#onRestart = onRestart;
+       this.#onGameOver = onGameOver;
+       this.#onAudioEvent = onAudioEvent;
+       this.#viewList = [this.#mainView];
+       Directions.initializeDirectionMaps();
    }
 
 
-   get isAnimationNecessary() {
-      return this.#isAnimationNecessary;
-   }
+    get isAnimationNecessary() {
+       return this.#isAnimationNecessary;
+    }
+
+
+    get isGameOverPending() {
+       return this.#isGameOverPending;
+    }
 
 
    initialize() {
@@ -123,9 +132,16 @@ export default class Game {
    }
 
 
-   incrementScoreBy(value) {
-      this.#currentTotalScore += value;
-   }
+    incrementScoreBy(value) {
+       this.#currentTotalScore += value;
+    }
+
+
+    playSound(name) {
+       if (this.#onAudioEvent) {
+          this.#onAudioEvent(name);
+       }
+    }
 
 
    #initializeViews() {
@@ -140,10 +156,16 @@ export default class Game {
    handleGameOver() {
       const isGameOver = this.#remainingPacmanLifes === 0;
 
-      if (isGameOver) {
-         this.#pause();
-          this.#onGameOver(this.#currentTotalScore);
-      }
+       if (isGameOver) {
+          this.#pause();
+          this.#isGameOverPending = true;
+
+          // Leave time for the death sound before showing the modal.
+          setTimeout(() => {
+             this.#isGameOverPending = false;
+             this.#onGameOver(this.#currentTotalScore);
+          }, this.#gameOverDelayMilliseconds);
+       }
    }
 
 

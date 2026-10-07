@@ -49,6 +49,46 @@ main {
 }
 
 
+.audioControls {
+   align-items: center;
+   display: flex;
+   gap: 0.35rem;
+   justify-content: center;
+   padding: 0.35rem 0.6rem;
+   white-space: nowrap;
+}
+
+
+#audioMuteButton {
+   border: 2px solid var(--color-yellow);
+   background-color: transparent;
+   color: var(--color-white);
+   cursor: pointer;
+   font: inherit;
+   padding: 0.25rem 0.45rem;
+}
+
+
+#audioMuteButton:hover,
+#audioMuteButton:focus-visible {
+   background-color: var(--color-pink);
+   outline: none;
+}
+
+
+#audioMuteButton[aria-pressed="true"] {
+   border-color: var(--color-pink);
+   color: var(--color-pink);
+}
+
+
+#audioVolume {
+   accent-color: var(--color-yellow);
+   cursor: pointer;
+   width: clamp(4.5rem, 8vw, 7rem);
+}
+
+
 #startMessage::before,
 #startMessage::after {
    position: absolute;

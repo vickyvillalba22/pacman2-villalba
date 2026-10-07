@@ -3,6 +3,7 @@
 import Game from '../game/model/Game.mjs';
 import Configuration from '../global/Configuration.mjs';
 import LifeCounterOverlay from './views/pixi/LifeCounterOverlay.mjs';
+import AudioManager from './audio/AudioManager.mjs';
 
 
 /*  
@@ -18,9 +19,28 @@ const startMessage = document.getElementById('startMessage');
 const gameOverModal = document.getElementById('gameOverModal');
 const gameOverScore = document.getElementById('gameOverScore');
 const restartButton = document.getElementById('restartButton');
+const audioMuteButton = document.getElementById('audioMuteButton');
+const audioVolume = document.getElementById('audioVolume');
+
+const audioMutedStorageKey = 'pacmanAudioMuted';
+const audioVolumeStorageKey = 'pacmanAudioVolume';
 
 const lifeCounterOverlay = new LifeCounterOverlay(mainCanvas);
-const game = new Game(mainCanvas, backgroundCanvas, showStartMessage, showGameOver);
+const audioManager = new AudioManager();
+let isAudioMuted = localStorage.getItem(audioMutedStorageKey) === 'true';
+let masterVolume = Number.parseFloat(localStorage.getItem(audioVolumeStorageKey));
+
+if (!Number.isFinite(masterVolume)) {
+   masterVolume = 1;
+}
+
+audioManager.setMuted(isAudioMuted);
+audioManager.setMasterVolume(masterVolume);
+audioVolume.value = masterVolume;
+updateAudioControls();
+
+const game = new Game(mainCanvas, backgroundCanvas, showStartMessage, showGameOver,
+                      audioName => audioManager.playSound(audioName));
 
 window.addEventListener('load', async () => {
    await lifeCounterOverlay.initialize();
@@ -31,6 +51,8 @@ mainCanvas.addEventListener('click', startGame);
 document.addEventListener('keydown', callBackKeyDown, true);
 document.getElementsByClassName('buttonMobileMenu')[0].addEventListener('click', callBackMobileMenuButton);
 restartButton.addEventListener('click', restartGame);
+audioMuteButton.addEventListener('click', toggleAudioMute);
+audioVolume.addEventListener('input', updateMasterVolume);
 
 
 function callBackMobileMenuButton() {
@@ -38,7 +60,30 @@ function callBackMobileMenuButton() {
 }
 
 
-function startGame() {
+function toggleAudioMute() {
+   isAudioMuted = audioManager.toggleMute();
+   localStorage.setItem(audioMutedStorageKey, String(isAudioMuted));
+   updateAudioControls();
+}
+
+
+function updateMasterVolume(event) {
+   masterVolume = Number(event.target.value);
+   audioManager.setMasterVolume(masterVolume);
+   localStorage.setItem(audioVolumeStorageKey, String(masterVolume));
+}
+
+
+function updateAudioControls() {
+   audioMuteButton.textContent = isAudioMuted ? 'Audio: OFF' : 'Audio: ON';
+   audioMuteButton.setAttribute('aria-pressed', String(isAudioMuted));
+}
+
+
+async function startGame() {
+   await audioManager.unlock();
+   audioManager.playSound('start');
+   audioManager.playMusic('levelMusic');
    startMessage.classList.add('invisible');
    lifeCounterOverlay.setPaused(false);
    game.start();
@@ -46,17 +91,20 @@ function startGame() {
 
 
 function showStartMessage() {
+   audioManager.stopMusic();
    startMessage.classList.remove('invisible');
 }
 
 
 function showGameOver(score) {
+   audioManager.stopMusic();
    gameOverScore.textContent = `Score: ${score}`;
    gameOverModal.classList.remove('invisible');
 }
 
 
-function restartGame() {
+async function restartGame() {
+   await audioManager.unlock();
    gameOverModal.classList.add('invisible');
    lifeCounterOverlay.setPaused(false);
    game.restart();
@@ -70,6 +118,10 @@ function togglePause() {
 
 
 function callBackKeyDown(event) {
+   if (game.isGameOverPending) {
+      return;
+   }
+
    if (!gameOverModal.classList.contains('invisible')) {
       if (event.code === 'Enter') {
          restartGame();

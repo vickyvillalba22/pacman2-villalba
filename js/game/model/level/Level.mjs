@@ -154,6 +154,11 @@ export default class Level {
     }
 
 
+    playSound(name) {
+        this.#game.playSound(name);
+    }
+
+
     incrementConsumedPoints() {
         this.#consumedPoints++;
     }

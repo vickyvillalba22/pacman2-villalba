@@ -50,18 +50,22 @@ export default class Pacman extends Actor {
 
 
    kill() {
-      super.level.removeDeadPacmanAt(super.currentPositionId);
-      this.#isAlive = false;
+       super.level.playSound('death');
+       super.level.removeDeadPacmanAt(super.currentPositionId);
+       this.#isAlive = false;
    }
 
 
    move() {
       if (!this.#hasCompletedCurrentTurn) {
          super.loadCurrentPositionFromBoard();
-         super.nextPosition = super.calculateNextPositionByCurrentDirection();
+          super.nextPosition = super.calculateNextPositionByCurrentDirection();
 
-         const hasTeleported = this.#handleTeleportation();  
-         this.#handleInaccessibleTileCollision();
+          const hasTeleported = this.#handleTeleportation();
+          if (hasTeleported) {
+             super.level.playSound('teleport');
+          }
+          this.#handleInaccessibleTileCollision();
          const isMovementPossible = this.#handleOtherPacmanCollision();
 
          if (isMovementPossible) {
@@ -152,11 +156,12 @@ export default class Pacman extends Actor {
       const isNextPositionPowerUp = super.isNextPositionElementCharacter(Configuration.powerUpCharacter);
 
       if (this.#isAlive && isNextPositionPowerUp) {
-         super.incrementScoreBy(Configuration.scoreValuePerPowerUp);
-         super.level.incrementConsumedPoints();
-         super.level.decrementAvailablePoints();
-         super.level.scareLivingGhosts();
-         super.nextPosition.elementCharacter = Configuration.emptyTileCharacter;
+          super.incrementScoreBy(Configuration.scoreValuePerPowerUp);
+          super.level.incrementConsumedPoints();
+          super.level.decrementAvailablePoints();
+          super.level.scareLivingGhosts();
+          super.level.playSound('powerUp');
+          super.nextPosition.elementCharacter = Configuration.emptyTileCharacter;
          this.#isBackgroundUpdateNeeded = true;
       }
    }
@@ -187,19 +192,20 @@ export default class Pacman extends Actor {
    #handleHostileGhostCollision(positionId) {
       const isPositionOccupiedByHostileGhost = super.level.isPositionOccupiedByHostileGhost(positionId);
 
-      if (isPositionOccupiedByHostileGhost) {
-         this.kill();
-      }
+        if (isPositionOccupiedByHostileGhost) {
+           this.kill();
+        }
    }
 
 
    #handleKillableGhostCollision(positionId) {
       const isPositionOccupiedByKillableGhost = super.level.isPositionOccupiedByKillableGhost(positionId);
 
-      if (this.#isAlive && isPositionOccupiedByKillableGhost) {
-         super.level.killGhost(positionId);
-         super.incrementScoreBy(Configuration.scoreValuePerEatenGhost);
-      }
+       if (this.#isAlive && isPositionOccupiedByKillableGhost) {
+          super.level.killGhost(positionId);
+          super.incrementScoreBy(Configuration.scoreValuePerEatenGhost);
+          super.level.playSound('ghostEaten');
+       }
    }
 
    
