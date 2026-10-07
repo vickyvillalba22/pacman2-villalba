@@ -1,4 +1,4 @@
-import { Application, BlurFilter, Container, Graphics, Text } from 'pixi.js';
+import { Application, Assets, Container, FillGradient, Graphics, Sprite, Text } from 'pixi.js';
 
 export default class DesignLabApp {
    #container = null;
@@ -9,9 +9,33 @@ export default class DesignLabApp {
    #animationContent = null;
    #animationTrail = null;
    #animationCharacter = null;
-   #animationMouth = null;
+   #animationBody = null;
+   #animationLabel = null;
+   #animationGhosts = [];
    #animationTime = 0;
    #animationPlaying = false;
+   #movementContainer = null;
+   #movementApp = null;
+   #movementContent = null;
+   #movementTextures = null;
+   #movementPacman = null;
+   #movementTileSize = 0;
+   #movementOriginX = 0;
+   #movementOriginY = 0;
+   #movementPosition = { row: 3, column: 4 };
+   #movementDirection = 'right';
+   #movementMap = [
+      '#################',
+      '#O...o#####o....#',
+      '#o###o#ooo#o###o#',
+      '#oooo#o###o#oooo#',
+      '####o#ooooo#o####',
+      '#oooo#####oooooo#',
+      '#o###ooooo###o..#',
+      '#o...o###o...o..#',
+      '#################'
+   ];
+   #movementKeyHandler = null;
    #tileSize = 48;
    #mode = 'characters';
    #showGrid = true;
@@ -39,9 +63,10 @@ export default class DesignLabApp {
       this.#stageContent = new Container();
       this.#app.stage.addChild(this.#stageContent);
 
-      this.#bindControls();
-      await this.#initializeAnimationPreview();
-      this.#resizeHandler = () => this.#resize();
+       this.#bindControls();
+       await this.#initializeAnimationPreview();
+       await this.#initializeMovementPreview();
+       this.#resizeHandler = () => this.#resize();
       window.addEventListener('resize', this.#resizeHandler);
       this.#resize();
 
@@ -64,9 +89,10 @@ export default class DesignLabApp {
       });
 
       this.#animationContainer.appendChild(this.#animationApp.canvas);
-      this.#animationContent = new Container();
-      this.#animationApp.stage.addChild(this.#animationContent);
-      this.#createAnimationCharacter();
+       this.#animationContent = new Container();
+       this.#animationApp.stage.addChild(this.#animationContent);
+       this.#createAnimationCharacter();
+       this.#createAnimationGhosts();
 
       document.getElementById('toggleAnimation').addEventListener('click', () => {
          this.#animationPlaying = !this.#animationPlaying;
@@ -129,109 +155,222 @@ export default class DesignLabApp {
       document.getElementById('canvasDimensions').textContent = `Canvas ${width} x ${height}`;
       this.#draw();
 
-      if (this.#animationApp && this.#animationContainer) {
-         this.#animationApp.renderer.resize(this.#animationContainer.clientWidth, this.#animationContainer.clientHeight);
-         this.#positionAnimationCharacter();
+       if (this.#animationApp && this.#animationContainer) {
+          this.#animationApp.renderer.resize(this.#animationContainer.clientWidth, this.#animationContainer.clientHeight);
+          this.#positionAnimationCharacter();
+       }
+
+       if (this.#movementApp && this.#movementContainer) {
+          this.#movementApp.renderer.resize(this.#movementContainer.clientWidth, this.#movementContainer.clientHeight);
+          this.#drawMovementMap();
+       }
+   }
+
+   async #initializeMovementPreview() {
+      this.#movementContainer = document.getElementById('movementCanvas');
+      if (!this.#movementContainer) {
+         return;
       }
+
+      this.#movementApp = new Application();
+      await this.#movementApp.init({
+         background: 0x090b17,
+         antialias: false,
+         resolution: window.devicePixelRatio || 1,
+         width: this.#movementContainer.clientWidth,
+         height: this.#movementContainer.clientHeight
+      });
+
+      this.#movementContainer.appendChild(this.#movementApp.canvas);
+      this.#movementContent = new Container();
+      this.#movementApp.stage.addChild(this.#movementContent);
+      this.#movementTextures = await Assets.load([
+         { alias: 'empty', src: '../sprites/background/emptySpace.svg' },
+         { alias: 'wall', src: '../sprites/background/wall.svg' },
+         { alias: 'point', src: '../sprites/background/consumables/point.svg' },
+         { alias: 'power', src: '../sprites/background/consumables/powerUp.svg' }
+      ]);
+      this.#movementKeyHandler = event => this.#handleMovementKey(event);
+      window.addEventListener('keydown', this.#movementKeyHandler);
+      this.#drawMovementMap();
+   }
+
+   #drawMovementMap() {
+      if (!this.#movementContent || !this.#movementTextures) {
+         return;
+      }
+
+      this.#movementContent.removeChildren().forEach(child => child.destroy());
+
+      const columnCount = this.#movementMap[0].length;
+      const rowCount = this.#movementMap.length;
+      const tileSize = Math.min(
+         this.#movementApp.screen.width / columnCount,
+         this.#movementApp.screen.height / rowCount
+      );
+      const originX = (this.#movementApp.screen.width - columnCount * tileSize) / 2;
+      const originY = (this.#movementApp.screen.height - rowCount * tileSize) / 2;
+      this.#movementTileSize = tileSize;
+      this.#movementOriginX = originX;
+      this.#movementOriginY = originY;
+
+      this.#movementMap.forEach((row, rowIndex) => {
+         [...row].forEach((tile, columnIndex) => {
+            const x = originX + columnIndex * tileSize;
+            const y = originY + rowIndex * tileSize;
+            const background = new Sprite(this.#movementTextures.empty);
+            background.position.set(x, y);
+            background.width = tileSize;
+            background.height = tileSize;
+            this.#movementContent.addChild(background);
+
+            const texture = tile === '#'
+               ? this.#movementTextures.wall
+               : tile === 'O'
+                  ? this.#movementTextures.power
+                  : tile === 'o'
+                     ? this.#movementTextures.point
+                     : null;
+            if (texture) {
+               const element = new Sprite(texture);
+               element.position.set(x, y);
+               element.width = tileSize;
+               element.height = tileSize;
+               this.#movementContent.addChild(element);
+            }
+         });
+      });
+
+      const pacmanSize = tileSize * 0.85;
+      const pacman = new Container();
+      const pacmanTrail = this.#createAnimationTrail(0xffe84d, tileSize * 4, pacmanSize, false);
+      const pacmanBody = new Graphics();
+      this.#drawPacmanBody(pacmanBody, pacmanSize / 2, 0.35);
+      pacman.addChild(pacmanTrail, pacmanBody);
+      pacman.position.set(
+         originX + ((this.#movementPosition.column + 0.5) * tileSize),
+         originY + ((this.#movementPosition.row + 0.5) * tileSize)
+      );
+      pacman.rotation = this.#getDirectionRotation(this.#movementDirection);
+      this.#movementPacman = pacman;
+      this.#movementContent.addChild(pacman);
+   }
+
+   #handleMovementKey(event) {
+      const directionByKey = {
+         ArrowUp: { name: 'up', row: -1, column: 0 },
+         ArrowRight: { name: 'right', row: 0, column: 1 },
+         ArrowDown: { name: 'down', row: 1, column: 0 },
+         ArrowLeft: { name: 'left', row: 0, column: -1 }
+      };
+      const direction = directionByKey[event.code];
+
+      if (!direction || !this.#movementPacman) {
+         return;
+      }
+
+      event.preventDefault();
+      this.#movementDirection = direction.name;
+      this.#movementPacman.rotation = this.#getDirectionRotation(direction.name);
+
+      const nextRow = this.#movementPosition.row + direction.row;
+      const nextColumn = this.#movementPosition.column + direction.column;
+      const isInsideMap = nextRow >= 0
+         && nextRow < this.#movementMap.length
+         && nextColumn >= 0
+         && nextColumn < this.#movementMap[0].length;
+
+      if (!isInsideMap || this.#movementMap[nextRow][nextColumn] === '#') {
+         return;
+      }
+
+      this.#movementPosition = { row: nextRow, column: nextColumn };
+      this.#movementPacman.position.set(
+         this.#movementOriginX + ((nextColumn + 0.5) * this.#movementTileSize),
+         this.#movementOriginY + ((nextRow + 0.5) * this.#movementTileSize)
+      );
    }
 
    #createAnimationCharacter() {
-      this.#animationTrail = new Container();
+      this.#animationTrail = this.#createAnimationTrail(0xffe84d, 220, 96, false);
       this.#animationContent.addChild(this.#animationTrail);
-      this.#createAnimationTrail();
 
       const character = new Container();
       this.#animationCharacter = character;
-      const radius = 48;
-      const body = new Graphics();
-      body.circle(0, 0, radius).fill(0xffe84d);
-      character.addChild(body);
-
-      this.#animationMouth = new Graphics();
-      character.addChild(this.#animationMouth);
+      this.#animationBody = new Graphics();
+      character.addChild(this.#animationBody);
       this.#animationContent.addChild(character);
-      this.#animationContent.addChild(new Text({
-         text: 'PAC-MAN / IDLE ANIMATION',
-         style: {
+       this.#animationLabel = new Text({
+          text: 'PAC-MAN + GHOSTS / IDLE ANIMATION',
+          style: {
             fill: 0x8b94b1,
             fontFamily: 'monospace',
             fontSize: 12,
-            letterSpacing: 1
-         }
-      }));
-      this.#animationContent.children[2].anchor.set(0.5, 0);
-      this.#animationContent.children[2].position.set(0, 82);
-      this.#positionAnimationCharacter();
-      this.#renderAnimationMouth(0.35);
+             letterSpacing: 1
+          }
+       });
+       this.#animationContent.addChild(this.#animationLabel);
+       this.#animationLabel.anchor.set(0.5, 0);
+       this.#positionAnimationCharacter();
+       this.#renderAnimationMouth(0.35);
+    }
+
+   #createAnimationGhosts() {
+      const ghosts = [
+         { color: 0xff425d },
+         { color: 0xff75c8 },
+         { color: 0x6de7ff },
+         { color: 0xffa347 }
+      ];
+
+      this.#animationGhosts = ghosts.map(ghost => {
+         const container = new Container();
+         const ghostSize = this.#tileSize * 0.68;
+         const trail = this.#createAnimationTrail(ghost.color, 130, ghostSize, true);
+         const character = this.#createGhost(ghost.color, 'normal', 'right');
+
+         trail.position.set(0, 0);
+         container.addChild(trail, character);
+         this.#animationContent.addChild(container);
+
+         return container;
+      });
    }
 
-   #createAnimationTrail() {
-      const radius = 48;
-      const length = 220;
-      const segmentCount = 28;
-      const segmentWidth = length / segmentCount;
+   #createAnimationTrail(color, length, height, slantedEntry) {
+      const radius = height / 2;
+      const overlap = radius;
+      const trailEnd = -radius + overlap;
+      const trail = new Container();
 
-      // The glow is kept in the trail container, below the sharp character layer.
-      const glow = new Graphics();
-      glow.roundRect(-radius - length, -radius, length, radius * 2, radius * 0.35);
-      glow.fill(0xffc400, 0.52);
-      glow.filters = [new BlurFilter({ strength: 18, quality: 4 })];
-      this.#animationTrail.addChild(glow);
+       const body = new Graphics();
 
-      const body = new Graphics();
-      const scanlines = new Graphics();
-      const borders = new Graphics();
+      const gradient = new FillGradient({
+         type: 'linear',
+         start: { x: 1, y: 0.5 },
+         end: { x: 0, y: 0.5 },
+         colorStops: [
+            { offset: 0, color: `#${color.toString(16).padStart(6, '0')}80` },
+            { offset: 1, color: `#${color.toString(16).padStart(6, '0')}00` }
+         ]
+      });
 
-      for (let segmentIndex = 0; segmentIndex < segmentCount; segmentIndex++) {
-         const distanceFromCharacter = segmentIndex / (segmentCount - 1);
-         const x = -radius - segmentWidth * (segmentIndex + 1);
-         const color = this.#interpolateColor(0xffb700, 0xffd700, 1 - distanceFromCharacter);
-         const alpha = 0.12 + (1 - distanceFromCharacter) * 0.82;
-
-         // Solid beam: full character diameter and a spatial alpha fade toward the tail.
-         body.rect(x, -radius, segmentWidth + 0.6, radius * 2);
-         body.fill(color, alpha);
-
-         // Horizontal CRT-like scanlines layered over the beam.
-         for (let row = 0; row < 12; row++) {
-            const y = -radius + 5 + row * 8;
-            scanlines.rect(x, y, segmentWidth + 0.6, 2);
-            scanlines.fill(0xfff6a8, alpha * (row % 2 === 0 ? 0.42 : 0.2));
-         }
+      // The slanted entry follows the ghost's lower edge into its body.
+      if (slantedEntry) {
+         const trailStart = trailEnd - length;
+         body
+            .moveTo(trailEnd, -radius)
+            .lineTo(trailEnd - radius, radius)
+            .lineTo(trailStart - radius, radius)
+            .lineTo(trailStart, -radius)
+            .closePath()
+            .fill(gradient);
+      } else {
+         body.rect(trailEnd - length, -radius, length, height).fill(gradient);
       }
 
-      body.alpha = 0.96;
-      scanlines.blendMode = 'add';
-      this.#animationTrail.addChild(body, scanlines);
-
-      // Thin, bright rails define both lateral borders of the beam.
-      borders.moveTo(-radius - length, -radius + 0.75);
-      borders.lineTo(-radius, -radius + 0.75);
-      borders.moveTo(-radius - length, radius - 0.75);
-      borders.lineTo(-radius, radius - 0.75);
-      borders.stroke({ width: 1.5, color: 0xffffcf, alpha: 0.92 });
-      borders.filters = [new BlurFilter({ strength: 2.5, quality: 2 })];
-      this.#animationTrail.addChild(borders);
-
-      // A crisp center highlight keeps the beam readable over the glow.
-      const highlight = new Graphics();
-      highlight.rect(-radius - length + 5, -1, length - 5, 2);
-      highlight.fill(0xffff9e, 0.34);
-      highlight.blendMode = 'add';
-      this.#animationTrail.addChild(highlight);
-   }
-
-   #interpolateColor(startColor, endColor, amount) {
-      const startRed = (startColor >> 16) & 0xff;
-      const startGreen = (startColor >> 8) & 0xff;
-      const startBlue = startColor & 0xff;
-      const endRed = (endColor >> 16) & 0xff;
-      const endGreen = (endColor >> 8) & 0xff;
-      const endBlue = endColor & 0xff;
-      const red = Math.round(startRed + (endRed - startRed) * amount);
-      const green = Math.round(startGreen + (endGreen - startGreen) * amount);
-      const blue = Math.round(startBlue + (endBlue - startBlue) * amount);
-      return (red << 16) | (green << 8) | blue;
+      trail.addChild(body);
+      return trail;
    }
 
    #positionAnimationCharacter() {
@@ -243,10 +382,16 @@ export default class DesignLabApp {
       const characterY = this.#animationApp.screen.height / 2 - 12;
       this.#animationCharacter.position.set(characterX, characterY);
       this.#animationTrail.position.set(characterX, characterY);
-      this.#animationContent.children[2].position.set(
+      this.#animationLabel.position.set(
          this.#animationApp.screen.width / 2,
-         this.#animationApp.screen.height / 2 + 70
+         14
       );
+
+      const ghostY = this.#animationApp.screen.height / 2 + 62;
+      const ghostSpacing = this.#animationApp.screen.width / (this.#animationGhosts.length + 1);
+      this.#animationGhosts.forEach((ghost, index) => {
+         ghost.position.set(ghostSpacing * (index + 1), ghostY);
+      });
    }
 
    #animatePacman(deltaTime) {
@@ -260,21 +405,27 @@ export default class DesignLabApp {
    }
 
    #renderAnimationMouth(opening) {
-      if (!this.#animationMouth) {
+      if (!this.#animationBody) {
          return;
       }
 
-      const radius = 48;
+      this.#drawPacmanBody(this.#animationBody, 48, opening);
+   }
+
+   #drawPacmanBody(body, radius, opening) {
       const angle = opening * Math.PI;
-      this.#animationMouth.clear();
-      this.#animationMouth.poly([
-         0,
-         0,
-         radius * Math.cos(-angle / 2),
-         radius * Math.sin(-angle / 2),
-         radius * Math.cos(angle / 2),
-         radius * Math.sin(angle / 2)
-      ]).fill(0x090b17);
+      const lowerMouthEdge = angle / 2;
+      const upperMouthEdge = Math.PI * 2 - lowerMouthEdge;
+
+      // Draw the Pac-Man silhouette directly, leaving the mouth out of the body.
+      body.clear();
+      body
+         .moveTo(0, 0)
+         .lineTo(radius * Math.cos(lowerMouthEdge), radius * Math.sin(lowerMouthEdge))
+         .arc(0, 0, radius, lowerMouthEdge, upperMouthEdge)
+         .lineTo(0, 0)
+         .closePath()
+         .fill(0xffe84d);
    }
 
    #draw() {
@@ -384,16 +535,30 @@ export default class DesignLabApp {
 
    #createGhost(color, state, direction) {
       const visual = new Graphics();
-      const width = this.#tileSize * 0.68;
-      const height = this.#tileSize * 0.68;
+      const size = this.#tileSize * 0.68;
+      const width = size;
+      const height = size;
       const isDead = state === 'dead';
       const isScared = state === 'scared' || state === 'scaredEnd';
       const bodyColor = isDead ? 0x0d1021 : (isScared ? 0x4b7cff : color);
       const left = -width / 2;
       const top = -height / 2;
+      const domeRadius = width / 2;
+      const domeTop = top + domeRadius;
+      const bottom = top + height;
       if (!isDead) {
-         visual.roundRect(left, top, width, height * 0.78, width * 0.25).fill(bodyColor);
-         visual.rect(left, top + height * 0.35, width, height * 0.25).fill(bodyColor);
+         visual
+            .moveTo(left, domeTop)
+            .arc(0, domeTop, domeRadius, Math.PI, Math.PI * 2)
+            .lineTo(width / 2, bottom)
+            .lineTo(left + width * 0.83, bottom - height * 0.1)
+            .lineTo(left + width * 0.66, bottom)
+            .lineTo(left + width * 0.5, bottom - height * 0.1)
+            .lineTo(left + width * 0.34, bottom)
+            .lineTo(left + width * 0.17, bottom - height * 0.1)
+            .lineTo(left, bottom)
+            .closePath()
+            .fill(bodyColor);
       }
 
       const eyeDirection = this.#getEyeDirection(direction);

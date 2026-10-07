@@ -120,22 +120,38 @@
             </section>
          </section>
 
-         <section class="animationSection" aria-label="Previsualización de animación">
+          <section class="animationSection" aria-label="Previsualización de animación">
             <div class="animationHeader">
                <div>
                   <p class="panelKicker">MOTION STUDY / 01</p>
                   <h2>Animation preview</h2>
-                  <p class="sectionIntro">Pac-Man permanece en la misma posición. El botón sólo activa y pausa la animación de la boca.</p>
+                   <p class="sectionIntro">Pac-Man y los fantasmas permanecen en la misma posición. El botón anima la boca de Pac-Man.</p>
                </div>
                <button id="toggleAnimation" class="animationButton" type="button">Activar animación</button>
             </div>
             <div id="animationCanvas" class="animationCanvas" aria-label="Animación de Pac-Man"></div>
             <div class="previewFooter animationFooter">
                <span id="animationStatus">PAUSED / STATIC</span>
-               <span>FRAME 01 / MOUTH CYCLE</span>
-            </div>
-         </section>
-      </main>
+                <span>MOUTH CYCLE / GHOST TRAILS</span>
+             </div>
+          </section>
+
+          <section class="animationSection movementSection" aria-label="Espacio de prueba de movimiento">
+             <div class="animationHeader">
+                <div>
+                   <p class="panelKicker">MOTION STUDY / 02</p>
+                   <h2>Movement preview</h2>
+                   <p class="sectionIntro">Espacio reservado para probar recorridos, giros y adaptación de las estelas.</p>
+                </div>
+                <span class="previewStatus">READY / EMPTY</span>
+             </div>
+             <div id="movementCanvas" class="animationCanvas movementCanvas" aria-label="Canvas de prueba de movimiento"></div>
+             <div class="previewFooter animationFooter">
+                <span>PATH TEST AREA</span>
+                <span>NO MOVEMENT LOGIC</span>
+             </div>
+          </section>
+       </main>
    </body>
 
 </html>
