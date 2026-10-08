@@ -4,8 +4,11 @@
   "description": "This is an attempt to build a variant of the game pacman from scratch using HTML, CSS and JavaScript for training purposes.",
   "main": "index.js",
   "scripts": {
-    "dev": "esbuild js/game/controller.js --bundle --format=esm --outfile=dist/game.js --servedir=.",
-    "build": "esbuild js/game/controller.js --bundle --format=esm --outfile=dist/game.js",
+    "dev": "npm run build:welcome && npm run dev:game",
+    "dev:game": "esbuild js/game/controller.js --bundle --format=esm --outfile=dist/game.js --servedir=.",
+    "build": "npm run build:game && npm run build:welcome",
+    "build:game": "esbuild js/game/controller.js --bundle --format=esm --outfile=dist/game.js",
+    "build:welcome": "esbuild js/welcomePixi.js --bundle --format=esm --outfile=dist/welcome-pixi.js",
     "build:design-lab": "esbuild js/designLab/controller.js --bundle --format=esm --outfile=dist/design-lab.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

@@ -1,0 +1,142 @@
+@import url(./base.css);
+@import url(./navigationMobile.css);
+@import url(./navigationDesktop.css);
+@import url(./extrasMenu.css);
+
+html,
+body {
+   height: 100%;
+   margin: 0;
+}
+
+body {
+   min-height: 100svh;
+   overflow: hidden;
+}
+
+.welcomeScreen {
+   align-items: center;
+   display: flex;
+   flex-direction: column;
+   justify-content: center;
+   gap: clamp(0.5rem, 2svh, 1.5rem);
+   height: 100svh;
+   margin: 0 auto;
+   min-height: 0;
+   overflow: hidden;
+   padding: clamp(3.5rem, 8svh, 6rem) 1rem 0;
+   position: relative;
+   text-align: center;
+   width: min(100%, 70rem);
+}
+
+.welcomeContent {
+   align-items: center;
+   display: flex;
+   flex: 1 1 auto;
+   flex-direction: column;
+   min-height: 0;
+   justify-content: center;
+   width: 100%;
+}
+
+.coverImage {
+   height: auto;
+   flex: 0 1 auto;
+   max-height: 34svh;
+   object-fit: contain;
+   object-position: bottom center;
+   width: min(100%, 58rem, 51svh);
+}
+
+#gameTitle {
+   color: var(--color-white);
+   font-size: clamp(3rem, min(14vw, 17svh), 10rem);
+   font-weight: normal;
+   line-height: 0.92;
+   margin: 0;
+   text-transform: uppercase;
+}
+
+#gameTitle > span {
+   display: block;
+}
+
+#gameTitle .gameSubtitle {
+   text-transform: lowercase;
+}
+
+.subtitleArtwork {
+   white-space: nowrap;
+}
+
+.pacmanLetter {
+   display: inline-block;
+   height: 0.68em;
+   image-rendering: pixelated;
+   object-fit: contain;
+   vertical-align: -0.1em;
+   width: 0.68em;
+}
+
+.visuallyHidden {
+   clip: rect(0, 0, 0, 0);
+   clip-path: inset(50%);
+   height: 1px;
+   overflow: hidden;
+   position: absolute;
+   white-space: nowrap;
+   width: 1px;
+}
+
+.playPrompt {
+   color: var(--color-white);
+   font-size: clamp(1.2rem, min(4.5vw, 5.5svh), 3rem);
+   line-height: 1;
+   margin: clamp(0.75rem, 3svh, 2rem) 0 0;
+}
+
+.playPrompt span {
+   text-transform: uppercase;
+}
+
+#playIcon {
+   flex: 0 0 auto;
+   height: clamp(3.5rem, 9svh, 6.5rem);
+   margin-top: clamp(0.35rem, 1svh, 0.7rem);
+   width: clamp(3.5rem, 9svh, 6.5rem);
+}
+
+#playIcon canvas {
+   display: block;
+   height: 100%;
+   image-rendering: pixelated;
+   width: 100%;
+}
+
+@media (max-height: 520px) {
+   .welcomeScreen {
+      gap: clamp(0.3rem, 2svh, 0.65rem);
+      padding-top: clamp(3rem, 14svh, 4rem);
+   }
+
+   #gameTitle {
+      font-size: clamp(2.5rem, min(12vw, 14svh), 7rem);
+   }
+
+   .playPrompt {
+      font-size: clamp(1rem, min(3.8vw, 5svh), 2rem);
+      margin-top: clamp(0.4rem, 2svh, 0.75rem);
+   }
+
+   #playIcon {
+      height: clamp(2.5rem, 8svh, 4rem);
+      margin-top: 0.25rem;
+      width: clamp(2.5rem, 8svh, 4rem);
+   }
+
+   .coverImage {
+      max-height: 32svh;
+      width: min(100%, 58rem, 48svh);
+   }
+}

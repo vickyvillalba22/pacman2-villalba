@@ -1,6 +1,7 @@
 @import url(./base.css);
 @import url(./navigationMobile.css);
 @import url(./navigationDesktop.css);
+@import url(./extrasMenu.css);
 
 :root {
    --lab-background: #080912;

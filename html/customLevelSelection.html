@@ -8,13 +8,18 @@
    <link rel="icon" type="image/svg+xml" href="../sprites/actors/pacman/pacman_right.svg">
    <link rel="stylesheet" href="../css/customLevelSelection.css">
    <script type="module" src="../js/customLevelSelection/controller.js"></script>
+   <script type="module" src="../js/extrasMenu.js"></script>
+   <script type="module" src="../dist/welcome-pixi.js"></script>
 </head>
 
 <body>
 
-   <nav class="menuBar">
-      <button class="buttonMobileMenu">Menu</button>
-      <ul>
+   <nav class="menuBar" aria-label="Navegación principal">
+      <div class="extrasHeader">
+         <button class="buttonMobileMenu" type="button" aria-expanded="false" aria-controls="extrasMenu">Extras</button>
+         <button class="extrasBackButton" type="button" aria-label="Volver"><img src="../assets/imgs/flecha-atras.png" alt=""></button>
+      </div>
+      <ul id="extrasMenu">
          <li><a href="../index.html">Game</a></li>
          <li class="currentSite"><a href="#">Custom Level</a></li>
          <li><a href="./editor.html">Level Editor</a></li>

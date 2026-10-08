@@ -1,6 +1,7 @@
 @import url(./base.css);
 @import url(./navigationMobile.css);
 @import url(./navigationDesktop.css);
+@import url(./extrasMenu.css);
 
 
 main {
@@ -22,6 +23,30 @@ main {
    max-width: 100%;
    image-rendering: pixelated;
    width: auto;
+}
+
+
+#countdownOverlay {
+   position: fixed;
+   z-index: 20;
+   inset: 0;
+   display: grid;
+   place-items: center;
+   background-color: #000000;
+}
+
+
+#countdownOverlay.invisible {
+   display: none;
+}
+
+
+#countdownNumber {
+   color: #ffffff;
+   font-family: var(--font-primary);
+   font-size: clamp(6rem, 24vw, 14rem);
+   line-height: 1;
+   text-shadow: 6px 6px 0 #7300c9;
 }
 
 
@@ -123,6 +148,63 @@ main {
 
 #gameOverModal.invisible {
    display: none;
+}
+
+
+#homeConfirmModal {
+   position: fixed;
+   z-index: 1100;
+   inset: 0;
+   display: grid;
+   place-items: center;
+   background-color: rgba(5, 0, 15, 0.88);
+}
+
+
+#homeConfirmModal.invisible {
+   display: none;
+}
+
+
+.homeConfirmPanel {
+   max-width: min(90vw, 34rem);
+}
+
+
+.homeConfirmPanel h1 {
+   font-size: clamp(1.8rem, 7vw, 3.5rem);
+}
+
+
+.homeConfirmPanel p {
+   color: var(--color-white);
+   font-size: clamp(1rem, 3vw, 1.4rem);
+   margin: 0 0 1.5rem;
+}
+
+
+.homeConfirmActions {
+   display: flex;
+   flex-wrap: wrap;
+   gap: 1rem;
+   justify-content: center;
+}
+
+
+.homeConfirmActions button {
+   border: 2px solid var(--color-yellow);
+   background-color: transparent;
+   color: var(--color-white);
+   cursor: pointer;
+   font: inherit;
+   padding: 0.5rem 0.8rem;
+}
+
+
+.homeConfirmActions button:hover,
+.homeConfirmActions button:focus-visible {
+   background-color: var(--color-pink);
+   outline: none;
 }
 
 

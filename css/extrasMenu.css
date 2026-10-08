@@ -1,0 +1,231 @@
+.menuBar {
+   left: auto;
+   position: static;
+   top: auto;
+   transform: none;
+   z-index: 1000;
+}
+
+.menuBar .buttonMobileMenu {
+   background: #ffc400;
+   border: 4px solid #ffdf58;
+   box-shadow: 4px 4px 0 #b56b00;
+   color: #090600;
+   cursor: pointer;
+   display: block !important;
+   font-size: 1.7rem;
+   left: 50%;
+   letter-spacing: 0.08em;
+   line-height: 1;
+   margin: 0;
+   min-width: 10rem;
+   padding: 0.25rem 1rem;
+   position: fixed;
+   text-transform: uppercase;
+   top: 1rem;
+   transform: translateX(-50%);
+   z-index: 1002;
+}
+
+.menuBar .buttonMobileMenu::before {
+   content: none;
+}
+
+.menuBar .extrasHeader {
+   align-items: center;
+   display: flex;
+   gap: clamp(0.5rem, 1.5vw, 1.5rem);
+}
+
+.extrasBackButton {
+   display: none;
+}
+
+.menuBar .extrasBackButton {
+   align-items: center;
+   background: transparent;
+   border: 0;
+   color: #ffbf2f;
+   cursor: pointer;
+   display: none;
+   flex: 0 0 clamp(2.5rem, 5.5svh, 4rem);
+   height: clamp(2.5rem, 5.5svh, 4rem);
+   justify-content: center;
+   line-height: 1;
+   padding: 0;
+   position: static;
+   width: clamp(2.5rem, 5.5svh, 4rem);
+}
+
+.menuBar .extrasBackButton img {
+   display: block;
+   height: 100%;
+   image-rendering: pixelated;
+   object-fit: contain;
+   width: 100%;
+}
+
+.menuBar.extrasMenuOpen .extrasHeader {
+   gap: clamp(0.5rem, 1.5vw, 1.5rem);
+   left: clamp(1rem, 5.5vw, 5rem);
+   position: fixed;
+   top: clamp(4.5rem, 18svh, 17rem);
+   z-index: 1003;
+}
+
+.menuBar.extrasMenuOpen .extrasBackButton {
+   display: flex;
+}
+
+.menuBar .extrasBackButton:hover,
+.menuBar .extrasBackButton:focus-visible,
+.menuBar .extrasBackButton.is-selected {
+   filter: drop-shadow(0 0 0.5rem #ffbf2f);
+   transform: scale(1.12);
+}
+
+.menuBar .extrasBackButton:focus-visible {
+   color: #fff;
+   outline: 2px solid #ffbf2f;
+   outline-offset: 3px;
+}
+
+.menuBar ul {
+   display: none;
+   list-style: none;
+}
+
+.menuBar.extrasMenuOpen #extrasMenu {
+   align-items: stretch;
+   background: #000;
+   border: 0;
+   display: flex;
+   flex-direction: column;
+   height: 100svh;
+   inset: 0;
+   justify-content: flex-start;
+   max-height: none;
+   margin: 0;
+   min-width: 0;
+   overflow: hidden;
+   padding: clamp(8rem, 30svh, 30rem) 0 1rem;
+   position: fixed;
+   width: 100vw;
+   z-index: 1000;
+}
+
+.menuBar li {
+   flex: 0 0 auto;
+   margin: 0 0 clamp(1rem, 4.5svh, 5rem);
+   padding: 0;
+   text-align: left;
+   width: 100%;
+}
+
+.menuBar a {
+   align-items: center;
+   color: #fff;
+   display: flex;
+   font-size: clamp(1.5rem, min(4.5vw, 3.5svh), 3rem);
+   line-height: 1;
+   min-height: clamp(3.5rem, 6svh, 7rem);
+   padding: 0 1rem 0 clamp(1rem, 7vw, 6rem);
+   text-decoration: none;
+   width: 100%;
+}
+
+.menuBar .menuCursor {
+   align-items: center;
+   display: flex;
+   flex: 0 0 clamp(2.5rem, 6vw, 4rem);
+   height: clamp(2.5rem, 6vw, 4rem);
+   justify-content: center;
+   margin-right: clamp(0.75rem, 2.5vw, 2rem);
+}
+
+.menuBar .menuCursor canvas {
+   display: block;
+   height: 100%;
+   image-rendering: pixelated;
+   width: 100%;
+}
+
+.menuBar li.is-selected > a {
+   background: linear-gradient(90deg, #7224d4 0%, rgba(83, 40, 127, 0.72) 47%, transparent 100%);
+   color: #fff;
+}
+
+.menuBar li > a:hover,
+.menuBar li > a:focus-visible {
+   color: #fff;
+   outline: none;
+}
+
+.menuBar .buttonMobileMenu.extrasMenuVisible {
+   background: transparent;
+   border: 0;
+   box-shadow: none;
+   color: #fff;
+   font-size: clamp(2.5rem, min(10vw, 12svh), 7rem);
+   letter-spacing: 0;
+   line-height: 1;
+   min-width: 0;
+   padding: 0;
+   position: static;
+   text-align: left;
+   transform: none;
+   z-index: auto;
+}
+
+.menuBar .buttonMobileMenu.extrasMenuVisible::after {
+   background: url('../assets/imgs/fantasma-naranja.png') center / contain no-repeat;
+   bottom: 0;
+   content: '';
+   height: clamp(6rem, 15vw, 12rem);
+   pointer-events: none;
+   position: fixed;
+   right: clamp(1rem, 8vw, 8rem);
+   width: clamp(6rem, 15vw, 12rem);
+}
+
+@media (max-height: 820px) {
+   .menuBar .buttonMobileMenu.extrasMenuVisible {
+      font-size: clamp(2rem, 10svh, 3rem);
+   }
+
+   .menuBar.extrasMenuOpen .extrasHeader {
+      gap: 0.6rem;
+      left: 1rem;
+      top: 3.5rem;
+   }
+
+   .menuBar.extrasMenuOpen .extrasBackButton {
+      flex-basis: 2.5rem;
+      height: 2.5rem;
+      width: 2.5rem;
+   }
+
+   .menuBar.extrasMenuOpen #extrasMenu {
+      padding-top: 7rem;
+   }
+
+   .menuBar li {
+      margin-bottom: 0.4rem;
+   }
+
+   .menuBar a {
+      font-size: clamp(1.2rem, 4svh, 1.8rem);
+      min-height: 2rem;
+   }
+
+   .menuBar .menuCursor {
+      flex-basis: 2rem;
+      height: 2rem;
+      margin-right: 0.6rem;
+   }
+
+   .menuBar .buttonMobileMenu.extrasMenuVisible::after {
+      height: 5rem;
+      width: 5rem;
+   }
+}
