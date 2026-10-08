@@ -1,4 +1,5 @@
 import { Application, Assets, Container, FillGradient, Graphics, Sprite, Text, Texture } from 'pixi.js';
+import WallTopology from './WallTopology.mjs';
 
 export default class DesignLabApp {
    #container = null;
@@ -22,6 +23,7 @@ export default class DesignLabApp {
    #movementPacmanBody = null;
    #movementPacmanRadius = 0;
    #movementAnimationTime = 0;
+   #movementPowerPellets = [];
    #movementPacmanTrail = null;
    #movementTrailPositions = [];
    #movementGhosts = [];
@@ -33,13 +35,13 @@ export default class DesignLabApp {
    #movementDirection = 'right';
    #movementMap = [
       '#################',
-      '#O...o#####o....#',
+       '#O..Oo#####o....#',
       '#o###o#ooo#o###o#',
       '#oooo#o###o#oooo#',
       '####o#ooooo#o####',
       '#oooo#####oooooo#',
       '#o###ooooo###o..#',
-      '#o...o###o...o..#',
+       '#o..Oo###o...P..#',
       '#################'
    ];
    #movementKeyHandler = null;
@@ -191,17 +193,16 @@ export default class DesignLabApp {
       this.#movementContainer.appendChild(this.#movementApp.canvas);
       this.#movementContent = new Container();
       this.#movementApp.stage.addChild(this.#movementContent);
-      this.#movementTextures = await Assets.load([
-         { alias: 'empty', src: '../sprites/background/emptySpace.svg' },
-         { alias: 'wall', src: '../sprites/background/wall.svg' },
-         { alias: 'point', src: '../sprites/background/consumables/point.svg' },
-         { alias: 'power', src: '../sprites/background/consumables/powerUp.svg' }
-      ]);
+       this.#movementTextures = await Assets.load([
+          { alias: 'empty', src: '../sprites/background/emptySpace.svg' },
+          { alias: 'power', src: '../sprites/background/consumables/powerUp.svg' }
+       ]);
       this.#movementKeyHandler = event => this.#handleMovementKey(event);
       window.addEventListener('keydown', this.#movementKeyHandler);
       this.#drawMovementMap();
-      this.#movementApp.ticker.add(({ deltaTime }) => this.#animateMovementPacman(deltaTime));
-      this.#movementApp.ticker.add(({ deltaTime }) => this.#animateMovementGhosts(deltaTime));
+       this.#movementApp.ticker.add(({ deltaTime }) => this.#animateMovementPacman(deltaTime));
+       this.#movementApp.ticker.add(() => this.#animateMovementPowerPellets());
+       this.#movementApp.ticker.add(({ deltaTime }) => this.#animateMovementGhosts(deltaTime));
    }
 
    #drawMovementMap() {
@@ -209,8 +210,9 @@ export default class DesignLabApp {
          return;
       }
 
-      this.#movementContent.removeChildren().forEach(child => child.destroy());
-      this.#movementPacmanTrail?.texture.destroy(true);
+       this.#movementContent.removeChildren().forEach(child => child.destroy());
+       this.#movementPowerPellets = [];
+       this.#movementPacmanTrail?.texture.destroy(true);
       this.#movementGhosts.forEach(ghost => {
          ghost.trailLayer?.texture.destroy(true);
          ghost.container = null;
@@ -231,9 +233,14 @@ export default class DesignLabApp {
       this.#movementOriginX = originX;
       this.#movementOriginY = originY;
 
-      if (this.#movementTrailPositions.length === 0) {
-         this.#movementTrailPositions.push({ ...this.#movementPosition });
-      }
+       if (this.#movementTrailPositions.length === 0) {
+          this.#movementTrailPositions.push({ ...this.#movementPosition });
+       }
+
+       const wallLayer = new Graphics();
+       WallTopology.getWallInfoList(this.#movementMap).forEach(wall => {
+          this.#drawMovementWall(wallLayer, wall, tileSize, originX, originY);
+       });
 
       this.#movementMap.forEach((row, rowIndex) => {
          [...row].forEach((tile, columnIndex) => {
@@ -245,28 +252,31 @@ export default class DesignLabApp {
             background.height = tileSize;
             this.#movementContent.addChild(background);
 
-            const texture = tile === '#'
-               ? this.#movementTextures.wall
-               : tile === 'O'
-                  ? this.#movementTextures.power
-                  : tile === 'o'
-                     ? this.#movementTextures.point
-                     : null;
-            if (texture) {
-               const element = new Sprite(texture);
-               element.position.set(x, y);
-               element.width = tileSize;
-               element.height = tileSize;
+            if (tile === 'o') {
+               const element = new Graphics();
+               element.circle(0, 0, tileSize * 0.08).fill(0xffffff);
+               element.position.set(x + tileSize / 2, y + tileSize / 2);
                this.#movementContent.addChild(element);
-            }
-         });
-      });
+            } else if (tile === 'O') {
+               const pellet = this.#createMovementPowerPellet(tileSize);
+               pellet.container.position.set(x + tileSize / 2, y + tileSize / 2);
+               this.#movementPowerPellets.push(pellet);
+               this.#movementContent.addChild(pellet.container);
+            } else if (tile === 'P') {
+               const portal = this.#createMovementPortal(tileSize);
+               portal.position.set(x + tileSize / 2, y + tileSize / 2);
+               this.#movementContent.addChild(portal);
+             }
+          });
+       });
+
+       this.#movementContent.addChild(wallLayer);
 
       const pacmanSize = tileSize * 0.85;
       this.#movementPacmanTrail = this.#createMovementTrailSprite();
       this.#renderMovementTrail(this.#movementPacmanTrail, this.#movementTrailPositions, 0xffe84d);
       this.#initializeMovementGhosts();
-      this.#movementGhosts.forEach(ghost => {
+       this.#movementGhosts.forEach(ghost => {
          ghost.trailLayer = this.#createMovementTrailSprite();
          this.#renderMovementTrail(ghost.trailLayer, ghost.trailPositions, ghost.color);
       });
@@ -680,6 +690,92 @@ export default class DesignLabApp {
       this.#movementAnimationTime += deltaTime * 0.08;
       const mouthOpening = 0.08 + ((Math.sin(this.#movementAnimationTime) + 1) / 2) * 0.52;
       this.#drawPacmanBody(this.#movementPacmanBody, this.#movementPacmanRadius, mouthOpening);
+   }
+
+    #drawMovementWall(layer, wall, tileSize, originX, originY) {
+       const x = originX + wall.column * tileSize;
+       const y = originY + wall.row * tileSize;
+       const inset = 1;
+      const left = x + inset;
+      const top = y + inset;
+      const right = x + tileSize - inset;
+      const bottom = y + tileSize - inset;
+       const cornerRadius = Math.min(16, tileSize * 0.33);
+
+       if (wall.exposedTop) {
+          layer
+             .moveTo(left + (wall.exposedLeft ? cornerRadius : 0), top)
+             .lineTo(right - (wall.exposedRight ? cornerRadius : 0), top);
+       }
+       if (wall.exposedRight) {
+          layer
+             .moveTo(right, top + (wall.exposedTop ? cornerRadius : 0))
+             .lineTo(right, bottom - (wall.exposedBottom ? cornerRadius : 0));
+       }
+       if (wall.exposedBottom) {
+          layer
+             .moveTo(right - (wall.exposedRight ? cornerRadius : 0), bottom)
+             .lineTo(left + (wall.exposedLeft ? cornerRadius : 0), bottom);
+       }
+       if (wall.exposedLeft) {
+          layer
+             .moveTo(left, bottom - (wall.exposedBottom ? cornerRadius : 0))
+             .lineTo(left, top + (wall.exposedTop ? cornerRadius : 0));
+       }
+
+       if (wall.exposedTop && wall.exposedLeft) {
+          layer
+             .moveTo(left + cornerRadius, top)
+             .arcTo(left, top, left, top + cornerRadius, cornerRadius);
+       }
+       if (wall.exposedTop && wall.exposedRight) {
+          layer
+             .moveTo(right - cornerRadius, top)
+             .arcTo(right, top, right, top + cornerRadius, cornerRadius);
+       }
+       if (wall.exposedRight && wall.exposedBottom) {
+          layer
+             .moveTo(right, bottom - cornerRadius)
+             .arcTo(right, bottom, right - cornerRadius, bottom, cornerRadius);
+       }
+       if (wall.exposedBottom && wall.exposedLeft) {
+          layer
+             .moveTo(left + cornerRadius, bottom)
+             .arcTo(left, bottom, left, bottom - cornerRadius, cornerRadius);
+       }
+       layer.stroke({ width: 3, color: 0xb026ff, alpha: 1, cap: 'round', join: 'round' });
+    }
+
+    #createMovementPowerPellet(tileSize) {
+      const container = new Container();
+      const trail = new Graphics();
+      const core = new Graphics();
+      trail.circle(0, 0, tileSize * 0.34).fill({ color: 0xffffff, alpha: 0.28 });
+      core.circle(0, 0, tileSize * 0.2).fill(0xffffff);
+      container.addChild(trail, core);
+      return { container, trail };
+   }
+
+   #createMovementPortal(tileSize) {
+      const visual = new Graphics();
+      visual.ellipse(0, 0, tileSize * 0.72, tileSize * 0.46).fill({ color: 0x6de7ff, alpha: 0.04 });
+      visual.ellipse(0, 0, tileSize * 0.58, tileSize * 0.37).fill({ color: 0x6de7ff, alpha: 0.08 });
+      visual.ellipse(0, 0, tileSize * 0.46, tileSize * 0.29).fill({ color: 0x6de7ff, alpha: 0.15 });
+      visual.ellipse(0, 0, tileSize * 0.3, tileSize * 0.18).fill(0x6de7ff);
+      visual.ellipse(0, 0, tileSize * 0.16, tileSize * 0.08).fill(0x0d1021);
+      return visual;
+   }
+
+   #animateMovementPowerPellets() {
+      if (this.#movementPowerPellets.length === 0) {
+         return;
+      }
+
+      const pulse = (Math.sin(this.#movementAnimationTime) + 1) / 2;
+      this.#movementPowerPellets.forEach(({ trail }) => {
+         trail.alpha = 0.2 + pulse * 0.62;
+         trail.scale.set(0.74 + pulse * 0.34);
+      });
    }
 
    #animateMovementGhosts(deltaTime) {
