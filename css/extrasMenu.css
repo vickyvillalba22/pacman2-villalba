@@ -7,28 +7,35 @@
 }
 
 .menuBar .buttonMobileMenu {
-   background: #ffc400;
-   border: 4px solid #ffdf58;
-   box-shadow: 4px 4px 0 #b56b00;
-   color: #090600;
+   background: transparent;
+   border: 0;
+   box-shadow: none;
+   color: inherit;
    cursor: pointer;
    display: block !important;
-   font-size: 1.7rem;
-   left: 50%;
-   letter-spacing: 0.08em;
-   line-height: 1;
+   height: clamp(2.5rem, 5.5svh, 4rem);
+   left: var(--menu-left, 1rem);
    margin: 0;
-   min-width: 10rem;
-   padding: 0.25rem 1rem;
+   min-width: 0;
+   padding: 0;
    position: fixed;
-   text-transform: uppercase;
-   top: 1rem;
-   transform: translateX(-50%);
+   top: var(--menu-top, 1rem);
+   transform: none;
+   width: clamp(2.5rem, 5.5svh, 4rem);
    z-index: 1002;
 }
 
 .menuBar .buttonMobileMenu::before {
    content: none;
+}
+
+
+.menuBar .buttonMobileMenu img {
+   display: block;
+   height: 100%;
+   image-rendering: pixelated;
+   object-fit: contain;
+   width: 100%;
 }
 
 .menuBar .extrasHeader {

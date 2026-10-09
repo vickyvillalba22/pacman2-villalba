@@ -56,6 +56,20 @@ export default class WallTopology {
 
       return walls;
    }
+
+   static getInnerCorner(board, row, column) {
+      const quadrants = {
+         topLeft: this.isWall(board, row - 1, column - 1),
+         topRight: this.isWall(board, row - 1, column),
+         bottomLeft: this.isWall(board, row, column - 1),
+         bottomRight: this.isWall(board, row, column)
+      };
+      const emptyQuadrants = Object.entries(quadrants)
+         .filter(([, isWall]) => !isWall)
+         .map(([name]) => name);
+
+      return emptyQuadrants.length === 1 ? emptyQuadrants[0] : null;
+   }
 }
 
 export { DIRECTIONS };

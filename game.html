@@ -20,7 +20,9 @@
    <body>
       <nav class="menuBar" aria-label="Navegación principal">
          <div class="extrasHeader">
-            <button class="buttonMobileMenu" type="button" aria-expanded="false" aria-controls="extrasMenu">Extras</button>
+             <button class="buttonMobileMenu" type="button" aria-label="Extras" aria-expanded="false" aria-controls="extrasMenu">
+                <img src="./assets/imgs/menu-button.png" alt="">
+             </button>
             <button class="extrasBackButton" type="button" aria-label="Volver"><img src="./assets/imgs/flecha-atras.png" alt=""></button>
          </div>
        <ul id="extrasMenu">
@@ -45,7 +47,10 @@
           <span id="countdownNumber"></span>
        </div>
        <main>
-          <canvas id="gameCanvas"></canvas>
+          <div id="gameFrame">
+             <canvas id="gameCanvas"></canvas>
+             <div id="gameHud" aria-hidden="true"></div>
+          </div>
           <div id="startMessage" class="invisible">Presioná ENTER para comenzar</div>
          <canvas id="backgroundCanvas" class="invisible"></canvas>
 

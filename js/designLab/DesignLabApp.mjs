@@ -26,8 +26,9 @@ export default class DesignLabApp {
    #movementPowerPellets = [];
    #movementPacmanTrail = null;
    #movementTrailPositions = [];
-   #movementGhosts = [];
-   #movementGhostStepTimer = 0;
+    #movementGhosts = [];
+    #movementGhostsPaused = true;
+    #movementGhostStepTimer = 0;
    #movementTileSize = 0;
    #movementOriginX = 0;
    #movementOriginY = 0;
@@ -239,7 +240,7 @@ export default class DesignLabApp {
 
        const wallLayer = new Graphics();
        WallTopology.getWallInfoList(this.#movementMap).forEach(wall => {
-          this.#drawMovementWall(wallLayer, wall, tileSize, originX, originY);
+           this.#drawMovementWall(wallLayer, wall, tileSize, originX, originY);
        });
 
       this.#movementMap.forEach((row, rowIndex) => {
@@ -692,36 +693,48 @@ export default class DesignLabApp {
       this.#drawPacmanBody(this.#movementPacmanBody, this.#movementPacmanRadius, mouthOpening);
    }
 
-    #drawMovementWall(layer, wall, tileSize, originX, originY) {
-       const x = originX + wall.column * tileSize;
-       const y = originY + wall.row * tileSize;
-       const inset = 1;
-      const left = x + inset;
-      const top = y + inset;
-      const right = x + tileSize - inset;
-      const bottom = y + tileSize - inset;
+     #drawMovementWall(layer, wall, tileSize, originX, originY) {
+        const x = originX + wall.column * tileSize;
+        const y = originY + wall.row * tileSize;
+        const inset = 1;
+       const left = x + inset;
+       const top = y + inset;
+       const right = x + tileSize - inset;
+       const bottom = y + tileSize - inset;
        const cornerRadius = Math.min(16, tileSize * 0.33);
+       const innerCornerRadius = 8;
+       const innerCornerLineTrim = innerCornerRadius - (2 * inset);
+       const innerCurveControl = innerCornerRadius * 0.552;
+       const innerCorner = (row, column) => WallTopology.getInnerCorner(this.#movementMap, row, column);
+       const topLeftCorner = innerCorner(wall.row, wall.column);
+       const topRightCorner = innerCorner(wall.row, wall.column + 1);
+       const bottomLeftCorner = innerCorner(wall.row + 1, wall.column);
+       const bottomRightCorner = innerCorner(wall.row + 1, wall.column + 1);
+       const topLeftInner = topLeftCorner === 'topLeft';
+       const topRightInner = topRightCorner === 'topRight';
+       const bottomLeftInner = bottomLeftCorner === 'bottomLeft';
+       const bottomRightInner = bottomRightCorner === 'bottomRight';
 
-       if (wall.exposedTop) {
-          layer
-             .moveTo(left + (wall.exposedLeft ? cornerRadius : 0), top)
-             .lineTo(right - (wall.exposedRight ? cornerRadius : 0), top);
-       }
-       if (wall.exposedRight) {
-          layer
-             .moveTo(right, top + (wall.exposedTop ? cornerRadius : 0))
-             .lineTo(right, bottom - (wall.exposedBottom ? cornerRadius : 0));
-       }
-       if (wall.exposedBottom) {
-          layer
-             .moveTo(right - (wall.exposedRight ? cornerRadius : 0), bottom)
-             .lineTo(left + (wall.exposedLeft ? cornerRadius : 0), bottom);
-       }
-       if (wall.exposedLeft) {
-          layer
-             .moveTo(left, bottom - (wall.exposedBottom ? cornerRadius : 0))
-             .lineTo(left, top + (wall.exposedTop ? cornerRadius : 0));
-       }
+        if (wall.exposedTop) {
+           layer
+              .moveTo(left + (wall.exposedLeft ? cornerRadius : (topLeftCorner ? innerCornerLineTrim : 0)), top)
+              .lineTo(right - (wall.exposedRight ? cornerRadius : (topRightCorner ? innerCornerLineTrim : 0)), top);
+        }
+        if (wall.exposedRight) {
+           layer
+              .moveTo(right, top + (wall.exposedTop ? cornerRadius : (topRightCorner ? innerCornerLineTrim : 0)))
+              .lineTo(right, bottom - (wall.exposedBottom ? cornerRadius : (bottomRightCorner ? innerCornerLineTrim : 0)));
+        }
+        if (wall.exposedBottom) {
+           layer
+              .moveTo(right - (wall.exposedRight ? cornerRadius : (bottomRightCorner ? innerCornerLineTrim : 0)), bottom)
+              .lineTo(left + (wall.exposedLeft ? cornerRadius : (bottomLeftCorner ? innerCornerLineTrim : 0)), bottom);
+        }
+        if (wall.exposedLeft) {
+           layer
+              .moveTo(left, bottom - (wall.exposedBottom ? cornerRadius : (bottomLeftCorner ? innerCornerLineTrim : 0)))
+              .lineTo(left, top + (wall.exposedTop ? cornerRadius : (topLeftCorner ? innerCornerLineTrim : 0)));
+        }
 
        if (wall.exposedTop && wall.exposedLeft) {
           layer
@@ -738,10 +751,59 @@ export default class DesignLabApp {
              .moveTo(right, bottom - cornerRadius)
              .arcTo(right, bottom, right - cornerRadius, bottom, cornerRadius);
        }
-       if (wall.exposedBottom && wall.exposedLeft) {
+        if (wall.exposedBottom && wall.exposedLeft) {
           layer
              .moveTo(left + cornerRadius, bottom)
              .arcTo(left, bottom, left, bottom - cornerRadius, cornerRadius);
+       }
+
+       if (bottomRightInner) {
+          layer
+             .moveTo(right + innerCornerRadius, bottom)
+             .bezierCurveTo(
+                right + innerCornerRadius - innerCurveControl,
+                bottom,
+                right,
+                bottom + innerCornerRadius - innerCurveControl,
+                right,
+                bottom + innerCornerRadius
+             );
+       }
+       if (bottomLeftInner) {
+          layer
+             .moveTo(left - innerCornerRadius, bottom)
+             .bezierCurveTo(
+                left - innerCornerRadius + innerCurveControl,
+                bottom,
+                left,
+                bottom + innerCornerRadius - innerCurveControl,
+                left,
+                bottom + innerCornerRadius
+             );
+       }
+       if (topRightInner) {
+          layer
+             .moveTo(right, top - innerCornerRadius)
+             .bezierCurveTo(
+                right,
+                top - innerCornerRadius + innerCurveControl,
+                right + innerCornerRadius - innerCurveControl,
+                top,
+                right + innerCornerRadius,
+                top
+             );
+       }
+       if (topLeftInner) {
+          layer
+             .moveTo(left, top - innerCornerRadius)
+             .bezierCurveTo(
+                left,
+                top - innerCornerRadius + innerCurveControl,
+                left - innerCornerRadius + innerCurveControl,
+                top,
+                left - innerCornerRadius,
+                top
+             );
        }
        layer.stroke({ width: 3, color: 0xb026ff, alpha: 1, cap: 'round', join: 'round' });
     }
@@ -778,10 +840,10 @@ export default class DesignLabApp {
       });
    }
 
-   #animateMovementGhosts(deltaTime) {
-      if (this.#movementGhosts.length === 0) {
-         return;
-      }
+    #animateMovementGhosts(deltaTime) {
+       if (this.#movementGhostsPaused || this.#movementGhosts.length === 0) {
+          return;
+       }
 
       this.#movementGhostStepTimer += deltaTime;
       if (this.#movementGhostStepTimer < 14) {

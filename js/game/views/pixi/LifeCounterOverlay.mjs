@@ -1,14 +1,19 @@
-import { Application, Container, Graphics, Text } from 'pixi.js';
+import { Application, Assets, Container, Graphics, Sprite, Text } from 'pixi.js';
 
 
 export default class LifeCounterOverlay {
 
     #mainCanvas = null;
+    #gameFrame = null;
+    #gameHud = null;
     #app = null;
     #heartContainer = null;
     #pauseIndicator = null;
     #pauseHint = null;
+    #pauseIcon = null;
+    #menuButton = null;
     #scoreLabel = null;
+    #scoreText = null;
     #lifeCount = 0;
     #score = 0;
     #slotCount = 0;
@@ -23,6 +28,9 @@ export default class LifeCounterOverlay {
 
     constructor(mainCanvas) {
         this.#mainCanvas = mainCanvas;
+        this.#gameFrame = mainCanvas.closest('#gameFrame') || mainCanvas;
+        this.#gameHud = this.#gameFrame.querySelector('#gameHud');
+        this.#menuButton = document.querySelector('.buttonMobileMenu');
         window.addEventListener('pacman-life-count', event => this.#updateFromRequest(event.detail));
         window.addEventListener('resize', () => this.#resizeToMainCanvas());
     }
@@ -66,8 +74,11 @@ export default class LifeCounterOverlay {
                 fontWeight: 'normal'
             }
         });
-        this.#pauseHint.anchor.set(0.5);
+        this.#pauseHint.anchor.set(1, 0.5);
         this.#app.stage.addChild(this.#pauseHint);
+
+        this.#pauseIcon = new Sprite(await Assets.load('./assets/imgs/pause-symbol.png'));
+        this.#app.stage.addChild(this.#pauseIcon);
 
         this.#pauseIndicator = new Container();
         this.#pauseIndicator.visible = false;
@@ -129,17 +140,12 @@ export default class LifeCounterOverlay {
         scoreCover.fill(0x000000);
         this.#heartContainer.addChild(scoreCover);
 
-        const scoreFontSize = Math.max(12, Math.floor(tileHeight * 0.5));
+        const scoreFontSize = Math.max(12, Math.floor(tileHeight * 0.7)) + 15;
         this.#scoreLabel.style.fontSize = `${scoreFontSize}px`;
         this.#scoreLabel.style.lineHeight = `${scoreFontSize}px`;
-        this.#positionScoreLabel(tileHeight);
         const scoreY = Math.max(0, (tileHeight - this.#scoreLabel.offsetHeight) / 2);
 
-        this.#pauseHint.style.fontSize = `${Math.max(8, Math.floor(tileHeight * 0.24)) + 8}px`;
-        this.#pauseHint.position.set(
-            this.#mainCanvas.clientWidth / 2,
-            tileHeight / 2
-        );
+        this.#layoutPauseHint(tileHeight);
 
         const score = new Text({
             text: `${this.#score}`,
@@ -150,9 +156,11 @@ export default class LifeCounterOverlay {
                 fontWeight: 'normal'
             }
         });
+        this.#scoreText = score;
         score.roundPixels = true;
+        this.#positionScoreLabel(tileHeight);
         score.position.set(
-            this.#scoreLabel.offsetWidth + 5,
+            score.position.x,
             scoreY
         );
         this.#heartContainer.addChild(score);
@@ -198,6 +206,37 @@ export default class LifeCounterOverlay {
         this.#pauseIndicator.position.set(
             (canvasWidth - indicatorSize) / 2,
             tileHeight + ((canvasHeight - tileHeight - indicatorSize) / 2)
+        );
+    }
+
+
+    #layoutPauseHint(tileHeight = this.#tileHeight * this.#getScaleY()) {
+        if (!this.#pauseHint || !this.#pauseIcon) {
+            return;
+        }
+
+        const canvasWidth = this.#mainCanvas.clientWidth;
+        const canvasHeight = this.#mainCanvas.clientHeight;
+        const hudHeight = this.#gameHud?.clientHeight || 48;
+        const iconSize = 42;
+        const rightInset = Math.min(12, Math.max(4, canvasWidth * 0.03));
+        const gap = 8;
+        const availableTextWidth = Math.max(0, canvasWidth - iconSize - gap - (rightInset * 2));
+
+        this.#pauseIcon.width = iconSize;
+        this.#pauseIcon.height = iconSize;
+        this.#pauseHint.style.fontSize = `${Math.max(8, Math.floor(tileHeight * 0.24)) + 18}px`;
+        this.#pauseHint.scale.set(
+            this.#pauseHint.width > 0 ? Math.min(1, availableTextWidth / this.#pauseHint.width) : 1,
+            1
+        );
+        this.#pauseHint.position.set(
+            canvasWidth - rightInset - iconSize - gap,
+            canvasHeight + (hudHeight / 2)
+        );
+        this.#pauseIcon.position.set(
+            Math.round(canvasWidth - rightInset - iconSize),
+            Math.round(canvasHeight + ((hudHeight - iconSize) / 2))
         );
     }
 
@@ -254,13 +293,15 @@ export default class LifeCounterOverlay {
             return;
         }
 
-        const canvasRectangle = this.#mainCanvas.getBoundingClientRect();
-        this.#app.canvas.style.left = `${canvasRectangle.left}px`;
-        this.#app.canvas.style.top = `${canvasRectangle.top}px`;
-        this.#app.canvas.style.width = `${canvasRectangle.width}px`;
-        this.#app.canvas.style.height = `${canvasRectangle.height}px`;
-        this.#app.renderer.resize(canvasRectangle.width, canvasRectangle.height);
+        const frameRectangle = this.#gameFrame.getBoundingClientRect();
+        this.#app.canvas.style.left = `${frameRectangle.left}px`;
+        this.#app.canvas.style.top = `${frameRectangle.top}px`;
+        this.#app.canvas.style.width = `${frameRectangle.width}px`;
+        this.#app.canvas.style.height = `${frameRectangle.height}px`;
+        this.#app.renderer.resize(frameRectangle.width, frameRectangle.height);
         this.#positionScoreLabel();
+        this.#positionMenuButton(frameRectangle);
+        this.#layoutPauseHint();
 
         if (this.#heartContainer.children.length > 0) {
             this.#renderHearts();
@@ -274,8 +315,29 @@ export default class LifeCounterOverlay {
         }
 
         const canvasRectangle = this.#mainCanvas.getBoundingClientRect();
-        this.#scoreLabel.style.left = `${canvasRectangle.left}px`;
+        const scoreWidth = this.#scoreText?.width || 0;
+        const totalScoreWidth = this.#scoreLabel.offsetWidth + 5 + scoreWidth;
+        const scoreLeft = canvasRectangle.left + ((canvasRectangle.width - totalScoreWidth) / 2);
+        this.#scoreLabel.style.left = `${scoreLeft}px`;
         this.#scoreLabel.style.top = `${canvasRectangle.top + Math.max(0, (tileHeight - this.#scoreLabel.offsetHeight) / 2)}px`;
+
+        if (this.#scoreText) {
+            this.#scoreText.position.x = ((canvasRectangle.width - totalScoreWidth) / 2) + this.#scoreLabel.offsetWidth + 5;
+        }
+    }
+
+
+    #positionMenuButton(canvasRectangle) {
+        if (!this.#menuButton) {
+            return;
+        }
+
+        const menuButtonSize = this.#menuButton.getBoundingClientRect().width;
+        const tileHeight = this.#tileHeight > 0
+            ? this.#tileHeight * this.#getScaleY()
+            : menuButtonSize;
+        this.#menuButton.style.setProperty('--menu-left', `${canvasRectangle.left}px`);
+        this.#menuButton.style.setProperty('--menu-top', `${canvasRectangle.top + ((tileHeight - menuButtonSize) / 2)}px`);
     }
 
 

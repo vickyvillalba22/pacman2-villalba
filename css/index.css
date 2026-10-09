@@ -12,17 +12,31 @@ main {
    justify-content: space-evenly;
    margin: auto;
    min-height: calc(100svh - 5rem);
-   width: 100%;
+   width: 90%;
+}
+
+
+#gameFrame {
+   display: flex;
+   flex: 0 1 auto;
+   flex-direction: column;
+   max-width: 100%;
+   min-width: 0;
 }
 
 
 #gameCanvas {
    display: block;
    height: auto;
-   max-height: calc(100svh - 5rem);
+   max-height: calc(100svh - 8rem);
    max-width: 100%;
    image-rendering: pixelated;
    width: auto;
+}
+
+
+#gameHud {
+   flex: 0 0 clamp(2.75rem, 6svh, 3.5rem);
 }
 
 
